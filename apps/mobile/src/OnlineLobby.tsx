@@ -76,11 +76,11 @@ export default function OnlineLobby() {
     finally { setBusy(false); }
   }
 
-  async function submitAction(action: "draft" | "end-turn", cardId?: string) {
+  async function submitAction(action: "draft" | "end-turn" | "create-build", cardId?: string, combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }) {
     if (!room) return;
     setBusy(true); setError("");
     try {
-      setGameSession(await applyGameAction(room.room_id, action, cardId));
+      setGameSession(await applyGameAction(room.room_id, action, cardId, combination));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not apply that move.");
       try { setGameSession(await getGameSession(room.room_id, "get")); } catch { /* Keep the original action error visible. */ }
@@ -101,7 +101,7 @@ export default function OnlineLobby() {
         <Text style={styles.kicker}>{gameSession ? "LIVE GAME" : room ? "WAITING LOBBY" : "THE TABLE IS YOURS"}</Text>
         <Text style={styles.hero}>{gameSession ? "Your game is underway." : room ? "Your table is ready." : "Every card has a purpose."}</Text>
         {room ? (gameSession ? (
-          <OnlineGame session={gameSession} room={room} busy={busy} onDraft={(cardId) => void submitAction("draft", cardId)} onEndTurn={() => void submitAction("end-turn")} />
+          <OnlineGame session={gameSession} room={room} busy={busy} onDraft={(cardId) => void submitAction("draft", cardId)} onEndTurn={() => void submitAction("end-turn")} onCreateBuild={(combination) => void submitAction("create-build", undefined, combination)} />
         ) : (
           <View style={styles.panel}>
             <Text style={styles.label}>{(room.visibility ?? "private").toUpperCase()} ROOM · {room.game_mode === "two" ? "TWO HANDS" : "FOUR HANDS"}</Text>
