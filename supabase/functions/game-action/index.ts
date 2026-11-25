@@ -80,7 +80,7 @@ Deno.serve(async (request: Request) => {
     const roomId = typeof body.roomId === "string" ? body.roomId : "";
     const action = body.action;
     if (!roomId) throw new Error("A room ID is required.");
-    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build") throw new Error("Unsupported game action.");
+    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build" && action !== "capture-loose") throw new Error("Unsupported game action.");
 
     const { data: room, error: roomError } = await admin
       .from("casino_rooms").select("id, game_mode").eq("id", roomId).maybeSingle();
@@ -268,6 +268,20 @@ Deno.serve(async (request: Request) => {
       capturedPiles[String(player.seat)].push(...capturedBuild.cards, ...selectedHand, ...selectedFloor, ...selectedOpponentPile);
       state.lastCapturerSeat = player.seat;
       state.message = `Seat ${player.seat} captured build value ${targetBuild.value}.`;
+    } else if (action === "capture-loose") {
+      const handCardId = typeof body.cardId === "string" ? body.cardId : "";
+      const floorCardId = typeof body.targetCardId === "string" ? body.targetCardId : "";
+      const handIndex = ownHand.findIndex((card) => card.id === handCardId);
+      const floor = state.floor as Card[];
+      const floorIndex = floor.findIndex((card) => card.id === floorCardId);
+      if (handIndex < 0 || floorIndex < 0) throw new Error("Choose a card from your hand and a loose floor card.");
+      if (ownHand[handIndex].rank !== floor[floorIndex].rank) throw new Error("Direct capture requires equal card values.");
+      const [handCard] = ownHand.splice(handIndex, 1);
+      const [floorCard] = floor.splice(floorIndex, 1);
+      const capturedPiles = state.capturedPiles as Record<string, Card[]>;
+      capturedPiles[String(player.seat)].push(handCard, floorCard);
+      state.lastCapturerSeat = player.seat;
+      state.message = `Seat ${player.seat} captured a loose ${floorCard.rank}.`;
     } else if (action === "top-up-build") {
       const buildId = typeof body.buildId === "string" ? body.buildId : "";
       const handCardIds: string[] = Array.isArray(body.handCardIds)
