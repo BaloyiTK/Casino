@@ -19,6 +19,7 @@ Run all SQL migration files in `supabase/migrations/` in filename order using th
 3. `20261125000300_room_roster_realtime.sql`
 4. `20261125000400_server_dealt_games.sql`
 5. `20261125000500_room_current_player.sql`
+6. `20261125000600_lock_private_game_state.sql`
 
 Alternatively, install the Supabase CLI, link this repository to your project, and run `supabase db push`.
 
