@@ -138,6 +138,7 @@ Deno.serve(async (request: Request) => {
       const requests = (state.ownershipRequests ?? []) as Array<{ id: string; buildId: string; requesterSeat: number; ownerSeat: number; status: string }>;
       if (action === "request-build-transfer") {
         if (build.ownerSeat === player.seat || build.team !== teamOf(player.seat)) throw new Error("You can only request a build owned by your partner.");
+        if (builds.some((item) => item.ownerSeat === player.seat)) throw new Error("You already own an active build. The ordinary transfer rule does not allow a second build.");
         if (requests.some((request) => request.buildId === buildId && request.status === "pending")) throw new Error("A transfer request is already pending for this build.");
         requests.push({ id: crypto.randomUUID(), buildId, requesterSeat: player.seat, ownerSeat: build.ownerSeat, status: "pending" });
         state.ownershipRequests = requests;
