@@ -109,6 +109,7 @@ function publicSession(state: Record<string, unknown>, player: PlayerRow, game: 
         handCount: hand.length
       })),
     floor,
+    builds: (state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>).map((build) => ({ id: build.id, value: build.value, ownerSeat: build.ownerSeat, team: build.team, cards: build.cards })),
     deckCount: deck.length
   };
 }
