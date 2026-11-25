@@ -39,7 +39,11 @@ The game has two modes:
   - Team 1: Player 1 and Player 3.
   - Team 2: Player 2 and Player 4.
 - Turn order is Player 1 → Player 2 → Player 3 → Player 4, then repeats.
-- The floor starts empty.
+
+### 2.3 Starting floor — South African two- and four-player versions
+
+- In both Two Hands (two-player) and Four Hands (four-player) modes, the floor starts empty.
+- No cards are dealt face-up onto the floor during initial setup.
 
 ## 3. Shuffle and dealing algorithm
 
@@ -64,7 +68,7 @@ For an array containing `n` cards:
 1. Set the current index `i` to the last array index (`n - 1`).
 2. Generate a uniformly distributed, cryptographically secure random integer `j` in the inclusive range `0..i`.
 3. Swap the cards at indexes `i` and `j`.
-4. Decrease `i` by one.
+4. Decrease `i) by one.
 5. Repeat steps 2–4 until `i` reaches 1.
 
 Use a CSPRNG-backed API such as Node.js `crypto.randomInt(0, i + 1)` (the upper bound is exclusive). Do not use `Math.random()` or a non-cryptographic/predictable random source.
@@ -97,6 +101,7 @@ Before play begins, validate that:
 - No Jacks, Queens, Kings, duplicate cards, or missing cards exist.
 - In Four Hands, each player has exactly 10 cards after dealing.
 - Each player's hand contains no duplicate physical card.
+- The floor is empty at the start of both Two Hands and Four Hands.
 
 If any validation fails, discard the invalid deck/deal and restart the complete setup; do not begin play with an invalid deck or hand.
 
@@ -112,6 +117,7 @@ Building and capturing are different actions.
 
 - **Create a build:** A player combines cards genuinely available from their own hand with eligible cards on the floor or in an existing build, as permitted by the build rules.
 - A player may use one card, two cards, three cards, four cards, or more in a valid combination, if those cards are actually available to that player.
+- **A player cannot create a build with a value that is already represented by a card on the floor.** Check the current floor before creating the build; if a floor card already has that value, the build cannot be created at that value.
 - A player may create and build their own build.
 - A player may assist by adding further valid combinations to their partner's existing build to maintain/top it. These additions belong to the partner's existing build; they do not make the assisting player its individual owner.
 - A player cannot create, build, or add to an opponent's build.
@@ -139,6 +145,7 @@ These are distinct. Team affiliation does not automatically give the partner ind
 - Cards used from the floor or opponents' captured-card piles must be removed from their previous locations and recorded in the capturing player's collection.
 - Only the top card of each opponent's captured-card pile is visible and eligible to use in a combination. When that top card is used, the next card underneath becomes the visible top card and is then eligible to use.
 - Never count a card both as part of a build and as collected.
+
 ### 4.3 Recover
 
 - If an opposing team captures a team's build, either member of the original team may recover it.
