@@ -1,3 +1,4 @@
+export { isSupabaseConfigured } from "./supabase";
 import { requireSupabaseSession, supabase } from "./supabase";
 
 export type RoomMode = "two" | "four";
