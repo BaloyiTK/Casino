@@ -12,7 +12,7 @@ export interface RoomSummary {
   status?: string;
   visibility?: RoomVisibility;
   seat?: number;
-  players?: Array<{ seat: number; display_name: string; is_host: boolean }>;
+  players?: Array<{ seat: number; display_name: string; is_host: boolean; is_me?: boolean }>;
 }
 
 function client() {
@@ -81,4 +81,35 @@ export async function getRoom(roomId: string): Promise<RoomSummary> {
   });
   if (error) throw error;
   return data as RoomSummary;
+}
+
+export interface OnlineGameSession {
+  gameId: string;
+  gameMode: RoomMode;
+  round: number;
+  currentSeat: number;
+  phase: string;
+  ownSeat: number;
+  ownHand: Array<{ id: string; suit: string; rank: number }>;
+  ownHandCount: number;
+  opponents: Array<{ seat: number; handCount: number }>;
+  floor: Array<{ id: string; suit: string; rank: number }>;
+  deckCount: number;
+}
+
+export async function getGameSession(
+  roomId: string,
+  action: "start" | "get" = "get"
+): Promise<OnlineGameSession> {
+  await requireSupabaseSession();
+  const { data, error } = await client().functions.invoke("game-session", {
+    body: { roomId, action }
+  });
+  if (error) {
+    const details = data && typeof data === "object" && "error" in data
+      ? String((data as { error: unknown }).error)
+      : error.message;
+    throw new Error(details);
+  }
+  return data as OnlineGameSession;
 }
