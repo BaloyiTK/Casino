@@ -69,7 +69,7 @@ Perform these stages in this exact order:
 5. Independently apply Fisher–Yates with fresh CSPRNG draws to the 10 cards in Clubs.
 6. **After all four suits have each been shuffled, combine the four shuffled suits into one 40-card deck.**
 
-The shuffle procedure ends when the four independently shuffled suits have been combined. **Do not perform another shuffle on the combined 40-card deck.** Do not combine the suits before their individual shuffles are complete.
+After combining the four independently shuffled suits, apply Fisher–Yates one more time to the complete 40-card deck, using fresh CSPRNG draws. **Both stages are mandatory: shuffle each suit separately, then shuffle the combined 40-card deck.** Do not combine the suits before their individual shuffles are complete.
 
 ### 3.3 Four Hands dealing algorithm
 
