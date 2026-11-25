@@ -123,11 +123,12 @@ export async function applyGameAction(
   action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose",
   cardId?: string,
   combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] },
-  buildId?: string
+  buildId?: string,
+  targetCardId?: string
 ): Promise<OnlineGameSession> {
   await requireSupabaseSession();
   const { data, error } = await client().functions.invoke("game-action", {
-    body: { roomId, action, cardId, buildId, ...(combination ?? {}) }
+    body: { roomId, action, cardId, buildId, targetCardId, ...(combination ?? {}) }
   });
   if (error) {
     const details = data && typeof data === "object" && "error" in data
