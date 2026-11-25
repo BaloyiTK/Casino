@@ -306,6 +306,48 @@ export function captureBuild(
   return succeed(next, `Player ${playerId} captured build ${buildId}.`);
 }
 
+
+/** Direct single-card capture: a card from hand takes one loose floor card of equal value. */
+export function captureLooseCard(
+  state: RulesState,
+  playerId: PlayerId,
+  handCardId: string,
+  floorCardId: string
+): RuleResult {
+  if (state.gameOver) return fail(state, "The game is over.");
+  if (state.shiyaObligation) {
+    return fail(state, "After Shiya, the player must capture one of the two active builds, not a loose card.");
+  }
+  const player = getPlayer(state, playerId);
+  if (!player) return fail(state, "Unknown player.");
+  const handCard = player.hand.find((card) => card.id === handCardId);
+  const floorCard = state.floor.find((card) => card.id === floorCardId);
+  if (!handCard || !floorCard) return fail(state, "Both cards must be available in the player's hand and on the loose floor.");
+  if (handCard.rank !== floorCard.rank) return fail(state, "Direct capture requires equal card values.");
+
+  const capturedCards = [handCard, floorCard];
+  const existingPile = getPile(state, playerId);
+  const capturedPiles = existingPile
+    ? state.capturedPiles.map((pile) =>
+        pile.playerId === playerId
+          ? { ...pile, cards: [...pile.cards, ...capturedCards] }
+          : pile
+      )
+    : [...state.capturedPiles, { playerId, cards: capturedCards }];
+
+  return succeed({
+    ...state,
+    players: state.players.map((item) =>
+      item.id === playerId
+        ? { ...item, hand: item.hand.filter((card) => card.id !== handCardId) }
+        : item
+    ),
+    floor: state.floor.filter((card) => card.id !== floorCardId),
+    capturedPiles,
+    lastSuccessfulCapturerId: playerId
+  }, `Player ${playerId} captured loose card ${floorCard.id} with ${handCard.id}.`);
+}
+
 /** Shiya transfers a partner's build immediately and requires a same-turn capture. */
 export function shiya(state: RulesState, playerId: PlayerId, buildId: string): RuleResult {
   if (state.gameOver) return fail(state, "The game is over.");
@@ -323,7 +365,7 @@ export function shiya(state: RulesState, playerId: PlayerId, buildId: string): R
   );
 
   if (alreadyOwnsBuild) {
-    const ids = state.builds.filter((item) => item.ownerId === playerId).map((item) => item.id);
+    const ids = nextBuilds.filter((item) => item.ownerId === playerId).map((item) => item.id);
     return succeed({
       ...state,
       builds: nextBuilds,
