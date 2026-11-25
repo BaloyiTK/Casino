@@ -117,12 +117,13 @@ export async function getGameSession(
 
 export async function applyGameAction(
   roomId: string,
-  action: "draft" | "end-turn",
-  cardId?: string
+  action: "draft" | "end-turn" | "create-build",
+  cardId?: string,
+  combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }
 ): Promise<OnlineGameSession> {
   await requireSupabaseSession();
   const { data, error } = await client().functions.invoke("game-action", {
-    body: { roomId, action, cardId }
+    body: { roomId, action, cardId, ...(combination ?? {}) }
   });
   if (error) {
     const details = data && typeof data === "object" && "error" in data
