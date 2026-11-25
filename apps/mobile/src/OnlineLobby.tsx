@@ -81,14 +81,15 @@ export default function OnlineLobby() {
     await Share.share({ message: "Join my Casino game. Room code: " + room.room_code });
   }
 
-  const capacity = mode === "two" ? "2 players" : "4 players";
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.page}>
         <Text style={styles.kicker}>{room ? "WAITING LOBBY" : "THE TABLE IS YOURS"}</Text>
         <Text style={styles.hero}>{room ? "Your table is ready." : "Every card has a purpose."}</Text>
-        {room ? (
+        {room ? (gameSession ? (
+          <OnlineGame session={gameSession} room={room} />
+        ) : (
           <View style={styles.panel}>
             <Text style={styles.label}>{room.visibility.toUpperCase()} ROOM · {room.game_mode === "two" ? "TWO HANDS" : "FOUR HANDS"}</Text>
             <Text style={styles.code}>{room.room_code}</Text>
@@ -103,10 +104,13 @@ export default function OnlineLobby() {
             {Array.from({ length: Math.max(0, room.max_players - room.occupied_slots) }, (_, i) => (
               <View key={i} style={styles.openSlot}><Text style={styles.muted}>Seat {room.occupied_slots + i + 1} · Waiting for player</Text></View>
             ))}
-            <Text style={styles.muted}>Online dealing and gameplay will be enabled after the server-authoritative game engine is connected.</Text>
-            <Pressable onPress={() => { setRoom(null); setError(""); void refreshRooms(); }} style={styles.secondary}><Text style={styles.secondaryText}>BACK TO LOBBY</Text></Pressable>
+            {room.status === "playing" ? <Text style={styles.muted}>The host has started the game. Your private hand is loading…</Text> : <Text style={styles.muted}>Waiting for every player slot to be filled.</Text>}
+            {room.status === "waiting" && room.occupied_slots === room.max_players && room.players?.some((p) => p.is_host && p.is_me) ? (
+              <Pressable onPress={() => void startGame()} disabled={busy} style={styles.primary}>{busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>SHUFFLE & DEAL</Text>}</Pressable>
+            ) : null}
+            <Pressable onPress={() => { setRoom(null); setGameSession(null); setError(""); void refreshRooms(); }} style={styles.secondary}><Text style={styles.secondaryText}>BACK TO LOBBY</Text></Pressable>
           </View>
-        ) : (
+        )) : (
           <>
             <View style={styles.panel}>
               <Text style={styles.label}>PLAYER NAME</Text>
