@@ -126,11 +126,11 @@ These are distinct. Team affiliation does not automatically give the partner ind
 
 ### 4.2 Capture
 
-- **Capture a build:** A player uses a card or a valid combination from their hand that matches the build value to collect that build.
-- A player may capture their own build or an opponent's build, provided they have the required card or valid combination.
+- **Capture a build:** A player captures a build using one single card from their hand whose value matches the build value. A combination of cards cannot be used to capture a build.
+- A player may capture their own build or an opponent's build, provided they have the single matching card.
 - A player cannot capture their partner's build while the partner remains its individual owner.
 - A capture collects the entire build, including its original cards and all additions made to it.
-- The card or cards used to capture the build are also collected.
+- The single card used to capture the build is also collected.
 - Captured cards must be removed from the floor/build and recorded in the capturing player's collection.
 - Never count a card both as part of a build and as collected.
 ### 4.3 Recover
@@ -148,7 +148,7 @@ A loose card is not automatically a team build: if Player 1 plays a 7 as a loose
 - A partner may ask the current individual owner to pass the build to them.
 - The current owner decides whether to grant the request.
 - If the owner grants the pass, individual ownership transfers to the partner.
-- The new owner may then capture the build, provided they have the required card or valid combination.
+- The new owner may then capture the build, provided they have the single matching card.
 - A partner does not automatically receive ownership.
 - Do not describe ownership transfer as something the partner can initiate unilaterally.
 
@@ -199,7 +199,7 @@ Before accepting a move, validate:
 
 1. The player actually holds every card they intend to play.
 2. Every floor/build card used is present and eligible.
-3. The combination and build/capture value are valid.
+3. Any combination used to build is valid, and any capture uses one single card matching the build value.
 4. The action respects individual ownership and partnership rules.
 5. No card has already been used, captured, or moved elsewhere.
 
