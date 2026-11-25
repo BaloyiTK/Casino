@@ -8,16 +8,23 @@ type Props = {
   busy: boolean;
   onDraft: (cardId: string) => void;
   onEndTurn: () => void;
+  onCreateBuild: (combination: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }) => void;
 };
 
 function cardLabel(card: { rank: number; suit: string }) {
   return `${card.rank === 1 ? "A" : card.rank}${card.suit}`;
 }
 
-export default function OnlineGame({ session, room, busy, onDraft, onEndTurn }: Props) {
+export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild }: Props) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [buildMode, setBuildMode] = useState(false);
+  const [buildHandIds, setBuildHandIds] = useState<string[]>([]);
+  const [buildFloorIds, setBuildFloorIds] = useState<string[]>([]);
   const myTurn = session.currentSeat === session.ownSeat && session.phase === "playing";
-  useEffect(() => { setSelectedCardId(null); }, [session.version]);
+  useEffect(() => { setSelectedCardId(null); setBuildMode(false); setBuildHandIds([]); setBuildFloorIds([]); }, [session.version]);
+  const toggleId = (ids: string[], id: string) => ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id];
+  const buildValue = [...session.ownHand.filter((card) => buildHandIds.includes(card.id)), ...session.floor.filter((card) => buildFloorIds.includes(card.id))].reduce((sum, card) => sum + card.rank, 0);
+  const clearBuildSelection = () => { setBuildHandIds([]); setBuildFloorIds([]); setBuildMode(false); };
   const players = room.players ?? [];
   const nameForSeat = (seat: number) =>
     players.find((player) => player.seat === seat)?.display_name ?? `Player ${seat}`;
@@ -40,9 +47,10 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn }: 
         {session.floor.length ? (
           <View style={styles.cardGrid}>
             {session.floor.map((card) => (
-              <View key={card.id} style={styles.floorCard}>
+              <Pressable key={card.id} disabled={!myTurn || busy || !buildMode} onPress={() => setBuildFloorIds((ids) => toggleId(ids, card.id))} style={[styles.floorCard, buildFloorIds.includes(card.id) && styles.selectedCard]}>
                 <Text style={[styles.cardFace, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>
-              </View>
+                {buildMode ? <Text style={styles.cardIndex}>{buildFloorIds.includes(card.id) ? "SELECTED" : "ADD"}</Text> : null}
+              </Pressable>
             ))}
           </View>
         ) : <Text style={styles.emptyFloor}>The floor is clear.</Text>}
@@ -51,22 +59,34 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn }: 
       <Text style={styles.section}>YOUR HAND · {session.ownHandCount} CARDS</Text>
       <View style={styles.hand}>
         {session.ownHand.map((card, index) => (
-          <Pressable key={card.id} onPress={() => setSelectedCardId(card.id)} disabled={!myTurn || busy} style={[styles.ownCard, selectedCardId === card.id && styles.selectedCard]}>
+          <Pressable key={card.id} onPress={() => buildMode ? setBuildHandIds((ids) => toggleId(ids, card.id)) : setSelectedCardId(card.id)} disabled={!myTurn || busy} style={[styles.ownCard, (buildMode ? buildHandIds.includes(card.id) : selectedCardId === card.id) && styles.selectedCard]}>
             <Text style={[styles.cardFace, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>
-            <Text style={styles.cardIndex}>{index + 1}</Text>
+            <Text style={styles.cardIndex}>{buildMode ? buildHandIds.includes(card.id) ? "BUILD" : index + 1 : index + 1}</Text>
           </Pressable>
         ))}
       </View>
 
       {session.phase === "playing" ? (
         <View style={styles.actions}>
-          <Text style={styles.actionHint}>{myTurn ? selectedCardId ? "Selected card is ready to draft." : "Select a card, or end your turn." : "Waiting for the current player."}</Text>
-          <View style={styles.actionRow}>
-            <Pressable onPress={() => selectedCardId && onDraft(selectedCardId)} disabled={!myTurn || !selectedCardId || busy} style={[styles.actionButton, (!myTurn || !selectedCardId || busy) && styles.disabled]}>
-              {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.actionText}>DRAFT TO FLOOR</Text>}
-            </Pressable>
-            <Pressable onPress={onEndTurn} disabled={!myTurn || busy} style={[styles.endButton, (!myTurn || busy) && styles.disabled]}><Text style={styles.actionText}>END TURN →</Text></Pressable>
-          </View>
+          <Text style={styles.actionHint}>{!myTurn ? "Waiting for the current player." : buildMode ? "Select at least one card from your hand and any loose floor cards." : selectedCardId ? "Selected card is ready to draft." : "Select a card to draft, or start creating a build."}</Text>
+          {buildMode ? (
+            <View style={styles.buildPanel}>
+              <Text style={styles.buildTotal}>BUILD VALUE: {buildValue}</Text>
+              <Text style={styles.actionHint}>{buildHandIds.length} hand card(s) · {buildFloorIds.length} floor card(s)</Text>
+              <View style={styles.actionRow}>
+                <Pressable onPress={() => onCreateBuild({ handCardIds: buildHandIds, floorCardIds: buildFloorIds, opponentPileCardIds: [] })} disabled={!myTurn || busy || buildHandIds.length === 0 || buildValue < 1 || buildValue > 10} style={[styles.actionButton, (!myTurn || busy || buildHandIds.length === 0 || buildValue < 1 || buildValue > 10) && styles.disabled]}><Text style={styles.actionText}>CREATE BUILD</Text></Pressable>
+                <Pressable onPress={clearBuildSelection} disabled={busy} style={styles.endButton}><Text style={styles.actionText}>CANCEL</Text></Pressable>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.actionRow}>
+              <Pressable onPress={() => selectedCardId && onDraft(selectedCardId)} disabled={!myTurn || !selectedCardId || busy} style={[styles.actionButton, (!myTurn || !selectedCardId || busy) && styles.disabled]}>
+                {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.actionText}>DRAFT TO FLOOR</Text>}
+              </Pressable>
+              <Pressable onPress={() => { setBuildMode(true); setSelectedCardId(null); }} disabled={!myTurn || busy} style={[styles.endButton, (!myTurn || busy) && styles.disabled]}><Text style={styles.actionText}>BUILD</Text></Pressable>
+              <Pressable onPress={onEndTurn} disabled={!myTurn || busy} style={[styles.endButton, (!myTurn || busy) && styles.disabled]}><Text style={styles.actionText}>END TURN →</Text></Pressable>
+            </View>
+          )}
         </View>
       ) : <Text style={styles.muted}>Scoring and final results are not enabled yet.</Text>}
 
@@ -112,6 +132,8 @@ const styles = StyleSheet.create({
   hand: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 },
   ownCard: { backgroundColor: "#fffefa", borderWidth: 1, borderColor: "#d9d9cf", borderRadius: 5, width: 55, height: 78, alignItems: "center", justifyContent: "center" },
   selectedCard: { borderColor: "#b28b45", borderWidth: 2, transform: [{ translateY: -4 }] },
+  buildPanel: { marginTop: 10, padding: 12, backgroundColor: "#f0f4ed", borderWidth: 1, borderColor: "#cbd7c9" },
+  buildTotal: { color: "#174c39", fontSize: 18, fontWeight: "800", marginBottom: 5 },
   actions: { backgroundColor: "#fbfaf6", borderWidth: 1, borderColor: "#dedfd5", padding: 14, marginBottom: 20 },
   actionHint: { color: "#7c877e", fontSize: 10, marginBottom: 11 },
   actionRow: { flexDirection: "row", gap: 8 },
