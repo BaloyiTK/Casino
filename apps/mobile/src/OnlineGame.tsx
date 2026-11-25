@@ -11,13 +11,14 @@ type Props = {
   onCreateBuild: (combination: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }) => void;
   onTopUp: (buildId: string, handCardIds: string[]) => void;
   onCaptureBuild: (buildId: string, selection: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }) => void;
+  onCaptureLoose: (handCardId: string, floorCardId: string) => void;
 };
 
 function cardLabel(card: { rank: number; suit: string }) {
   return `${card.rank === 1 ? "A" : card.rank}${card.suit}`;
 }
 
-export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild }: Props) {
+export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose }: Props) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [buildMode, setBuildMode] = useState(false);
   const [buildHandIds, setBuildHandIds] = useState<string[]>([]);
@@ -33,6 +34,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
   const toggleId = (ids: string[], id: string) => ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id];
   const buildValue = [...session.ownHand.filter((card) => buildHandIds.includes(card.id)), ...session.floor.filter((card) => buildFloorIds.includes(card.id))].reduce((sum, card) => sum + card.rank, 0);
   const topUpBuild = session.builds.find((build) => build.id === topUpBuildId);
+  const selectedHandCard = session.ownHand.find((card) => card.id === selectedCardId);
   const topUpTotal = session.ownHand.filter((card) => topUpHandIds.includes(card.id)).reduce((sum, card) => sum + card.rank, 0);
   const captureBuild = session.builds.find((build) => build.id === captureBuildId);
   const captureTotal = [...session.ownHand.filter((card) => captureHandIds.includes(card.id)), ...session.floor.filter((card) => captureFloorIds.includes(card.id)), ...session.capturedPiles.flatMap((pile) => pile.topCard && capturePileIds.includes(pile.topCard.id) ? [pile.topCard] : [])].reduce((sum, card) => sum + card.rank, 0);
@@ -59,9 +61,9 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
         {session.floor.length ? (
           <View style={styles.cardGrid}>
             {session.floor.map((card) => (
-              <Pressable key={card.id} disabled={!myTurn || busy || (!buildMode && !captureBuildId)} onPress={() => captureBuildId ? setCaptureFloorIds((ids) => toggleId(ids, card.id)) : setBuildFloorIds((ids) => toggleId(ids, card.id))} style={[styles.floorCard, (buildFloorIds.includes(card.id) || captureFloorIds.includes(card.id)) && styles.selectedCard]}>
+              <Pressable key={card.id} disabled={!myTurn || busy || (!buildMode && !captureBuildId && (!selectedHandCard || selectedHandCard.rank !== card.rank))} onPress={() => captureBuildId ? setCaptureFloorIds((ids) => toggleId(ids, card.id)) : buildMode ? setBuildFloorIds((ids) => toggleId(ids, card.id)) : selectedCardId ? onCaptureLoose(selectedCardId, card.id) : undefined} style={[styles.floorCard, (buildFloorIds.includes(card.id) || captureFloorIds.includes(card.id)) && styles.selectedCard]}>
                 <Text style={[styles.cardFace, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>
-                {buildMode || captureBuildId ? <Text style={styles.cardIndex}>{captureBuildId ? captureFloorIds.includes(card.id) ? "CAPTURE" : "ADD" : buildFloorIds.includes(card.id) ? "SELECTED" : "ADD"}</Text> : null}
+                {buildMode || captureBuildId ? <Text style={styles.cardIndex}>{captureBuildId ? captureFloorIds.includes(card.id) ? "CAPTURE" : "ADD" : buildFloorIds.includes(card.id) ? "SELECTED" : "ADD"}</Text> : selectedHandCard?.rank === card.rank ? <Text style={styles.cardIndex}>MATCH · CAPTURE</Text> : null}
               </Pressable>
             ))}
           </View>
