@@ -127,13 +127,12 @@ These are distinct. Team affiliation does not automatically give the partner ind
 ### 4.2 Capture
 
 - **Capture a build:** A player uses a card or a valid combination from their hand that matches the build value to collect that build.
-- A player can capture their own build.
+- A player may capture their own build or an opponent's build, provided they have the required card or valid combination.
+- A player cannot capture their partner's build while the partner remains its individual owner.
 - A capture collects the entire build, including its original cards and all additions made to it.
 - The card or cards used to capture the build are also collected.
 - Captured cards must be removed from the floor/build and recorded in the capturing player's collection.
 - Never count a card both as part of a build and as collected.
-- A player cannot capture a partner's build while the partner remains its individual owner.
-
 ### 4.3 Recover
 
 - If an opposing team captures a team's build, the original team has a right to recover it under the recovery rule.
