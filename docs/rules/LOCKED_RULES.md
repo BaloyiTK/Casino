@@ -112,8 +112,9 @@ Building and capturing are different actions.
 
 - **Create a build:** A player combines cards genuinely available from their own hand with eligible cards on the floor or in an existing build, as permitted by the build rules.
 - A player may use one card, two cards, three cards, four cards, or more in a valid combination, if those cards are actually available to that player.
-- A player may create or build on their own build, their partner's build, or an opponent's build, subject to the ownership and build rules below.
-- A player may add further combinations onto an existing team build to assist in maintaining/topping that build. These additions belong to the existing build; do not silently treat them as separate independent builds.
+- A player may create and build their own build.
+- A player may assist by adding further valid combinations to their partner's existing build to maintain/top it. These additions belong to the partner's existing build; they do not make the assisting player its individual owner.
+- A player cannot create, build, or add to an opponent's build.
 - Every card used in a build or top-up action must be genuinely held by the player or legitimately available on the table/build. A player cannot use a card they do not have.
 
 **Example:** If Player 1 finds a 2 on the floor and uses a 5 from their hand, Player 1 creates a build of 7.
