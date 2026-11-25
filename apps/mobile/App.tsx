@@ -34,6 +34,7 @@ function PlayingCard({
     return <View style={[styles.card, styles.cardBack]}><Text style={styles.cardBackMark}>♠</Text></View>;
   }
   if (!card) return null;
+  const cardColor = isRed(card) ? "#b93636" : "#1b2922";
   return (
     <Pressable
       accessibilityRole="button"
@@ -41,9 +42,9 @@ function PlayingCard({
       onPress={onPress}
       style={[styles.card, isRed(card) ? styles.redCard : styles.blackCard, selected && styles.selectedCard]}
     >
-      <Text style={styles.cardRank}>{card.rank === 1 ? "A" : card.rank}</Text>
-      <Text style={styles.cardSuit}>{card.suit}</Text>
-      <Text style={styles.cardBottom}>{card.rank === 1 ? "A" : card.rank}{card.suit}</Text>
+      <Text style={[styles.cardRank, { color: cardColor }]}>{card.rank === 1 ? "A" : card.rank}</Text>
+      <Text style={[styles.cardSuit, { color: cardColor }]}>{card.suit}</Text>
+      <Text style={[styles.cardBottom, { color: cardColor }]}>{card.rank === 1 ? "A" : card.rank}{card.suit}</Text>
     </Pressable>
   );
 }
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
   card: { width: 39, height: 57, borderRadius: 5, borderWidth: 1, borderColor: "#deded5", backgroundColor: "#fffefa", alignItems: "center", justifyContent: "center", position: "relative", shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 2, elevation: 2 },
   redCard: { color: "#b93636" },
   blackCard: { color: "#1b2922" },
-  cardRank: { position: "absolute", top: 3, left: 5, fontSize: 10, fontWeight: "800", color: "inherit" as never },
+  cardRank: { position: "absolute", top: 3, left: 5, fontSize: 10, fontWeight: "800", color: "#1b2922" },
   cardSuit: { fontSize: 20, color: "#1b2922" },
   cardBottom: { position: "absolute", bottom: 3, right: 4, fontSize: 8, color: "#1b2922", transform: [{ rotate: "180deg" }] },
   cardBack: { backgroundColor: "#315b48", borderColor: "#e8e2d2", borderWidth: 2, justifyContent: "center" },
