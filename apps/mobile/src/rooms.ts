@@ -97,6 +97,7 @@ export interface OnlineGameSession {
   opponents: Array<{ seat: number; handCount: number }>;
   floor: Array<{ id: string; suit: string; rank: number }>;
   builds: Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Array<{ id: string; suit: string; rank: number }> }>;
+  capturedPiles: Array<{ seat: number; count: number; topCard: { id: string; suit: string; rank: number } | null }>;
   deckCount: number;
 }
 
@@ -119,7 +120,7 @@ export async function getGameSession(
 
 export async function applyGameAction(
   roomId: string,
-  action: "draft" | "end-turn" | "create-build" | "top-up-build",
+  action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build",
   cardId?: string,
   combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] },
   buildId?: string
