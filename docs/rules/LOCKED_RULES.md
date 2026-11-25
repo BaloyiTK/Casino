@@ -109,17 +109,27 @@ Do not change the algorithms, dealing order, or shuffle stages without explicit 
 
 ## 4. Playing rules
 
-The playing rules are divided into four actions: Build, Capture, Recover, and Partner Assist. These actions are distinct and must follow the card-integrity and ownership rules in this document.
+The playing rules include Drafting, Build, Capture, Recover, and Partner Assist. A turn may contain multiple legal actions; a player is not limited to one action per turn. Every action must follow the card-integrity and ownership rules in this document.
 
-### 4.1 Build
+### 4.1 Drafting
+
+- A player may play a card from their hand face-up onto the floor without building or capturing.
+- This action is called **Drafting**.
+- A drafted card becomes a loose floor card and is not part of a build or any player's captured collection.
+
+### 4.2 Build
 
 Building and capturing are different actions.
+
+- A player may own no more than one active build at a time.
+- A player cannot create a second build while they already own an active build.
 
 - **Create a build:** A player combines cards genuinely available from their own hand with eligible cards on the floor or in an existing build, as permitted by the build rules.
 - A player may use one card, two cards, three cards, four cards, or more in a valid combination, if those cards are actually available to that player.
 - **A player cannot create a build with a value that is already represented by a card on the floor.** Check the current floor before creating the build; if a floor card already has that value, the build cannot be created at that value.
 - A player may create and build their own build.
 - A player may assist by adding further valid combinations to their partner's existing build to maintain/top it. These additions belong to the partner's existing build; they do not make the assisting player its individual owner.
+- Any addition to an existing build must match that build's existing value. An addition must not change the build's value.
 - A player cannot create, build, or add to an opponent's build.
 - Every card used in a build or top-up action must be genuinely held by the player or legitimately available on the table/build. A player cannot use a card they do not have.
 
@@ -131,8 +141,9 @@ A build has both:
 
 These are distinct. Team affiliation does not automatically give the partner individual ownership or the right to capture.
 
-### 4.2 Capture
+### 4.3 Capture
 
+- **Direct single-card capture:** A player may capture one eligible loose floor card directly, without an existing build, by playing a card of the same value from their hand. Both cards are collected by the capturing player.
 - **Capture a build:** A player may capture a build by making a combination whose total value matches the build value.
 - A capture combination may use any eligible mix of loose cards on the floor and visible top cards from opponents' captured-card piles. The player may combine multiple loose floor cards, multiple eligible opponent-pile top cards, or cards from both locations.
 - **Example — loose floor cards:** If a build is worth 8 and the floor has loose cards 2 and 6, the player may combine 2 + 6 = 8 to capture the build. The player takes the entire build and also collects both the 2 and the 6 used in the combination.
@@ -146,7 +157,7 @@ These are distinct. Team affiliation does not automatically give the partner ind
 - Only the top card of each opponent's captured-card pile is visible and eligible to use in a combination. When that top card is used, the next card underneath becomes the visible top card and is then eligible to use.
 - Never count a card both as part of a build and as collected.
 
-### 4.3 Recover
+### 4.4 Recover
 
 - If an opposing team captures a team's build, either member of the original team may recover it.
 - **Recovery works like creating a build:** the recovering player may form the required build value using a valid combination of cards available under Section 4.1. The player does not need to hold a single card equal to the build value in their hand; they may build that value through a valid combination, just as when creating a build. Recovery is not a separate capture action.
@@ -157,7 +168,7 @@ These are distinct. Team affiliation does not automatically give the partner ind
 
 A loose card is not automatically a team build: if Player 1 plays a 7 as a loose card onto the floor, Player 3 cannot recover that loose card as a team build. Player 3 may still use that 7 to create a build if they have the necessary cards.
 
-### 4.4 Partner Assist
+### 4.5 Partner Assist
 
 - A partner may assist with maintaining/topping their teammate's team build if they have the required cards.
 - A partner cannot capture that build while their teammate remains its individual owner.
