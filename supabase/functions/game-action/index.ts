@@ -10,6 +10,26 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
 
+function validateCardLedger(state: Record<string, any>) {
+  const suits: Suit[] = ["♠", "♥", "♦", "♣"];
+  const expected = new Set(suits.flatMap((suit) =>
+    Array.from({ length: 10 }, (_, index) => `${suit}-${index + 1}`)
+  ));
+  const deck = state.deck as Card[];
+  const hands = Object.values(state.hands as Record<string, Card[]>).flat();
+  const floor = state.floor as Card[];
+  const builds = (state.builds as Array<{ cards: Card[] }>).flatMap((build) => build.cards);
+  const captured = Object.values(state.capturedPiles as Record<string, Card[]>).flat();
+  const allCards = [...deck, ...hands, ...floor, ...builds, ...captured];
+  const ids = allCards.map((card) => card.id);
+  if (allCards.length !== 40 || new Set(ids).size !== 40 || ids.some((id) => !expected.has(id))) {
+    throw new Error("Card integrity check failed. The move was rejected; all 40 physical cards must exist exactly once.");
+  }
+  if ([...expected].some((id) => !ids.includes(id))) {
+    throw new Error("Card integrity check failed. A physical card is missing.");
+  }
+}
+
 function dealNextTwoHandsRound(players: PlayerRow[], state: Record<string, any>) {
   const deck = state.deck as Card[];
   const hands = state.hands as Record<string, Card[]>;
@@ -129,7 +149,7 @@ Deno.serve(async (request: Request) => {
         : `Turn passed to seat ${state.currentSeat}.`;
     }
 
-    const { data: newVersion, error: commitError } = await admin.rpc("casino_commit_game_action", {
+    validateCardLedger(state);\n\n    const { data: newVersion, error: commitError } = await admin.rpc("casino_commit_game_action", {
       p_game_id: game.id,
       p_actor_user_id: userId,
       p_expected_version: privateRow.version,
