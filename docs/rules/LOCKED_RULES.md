@@ -29,8 +29,7 @@ The game has two modes:
 - Two players participate.
 - The mode consists of two rounds.
 - Each player receives 10 cards per round.
-- Do not shuffle again before Round 2. Continue with the original deck order.
-- For the Round 2 deal, deal two cards to Player 1, then two cards to Player 2, and repeat that order until each player has 10 cards.
+- Round 2 uses the same universal dealing and deck-order rules in Section 3.
 
 ### 2.2 Four Hands
 
@@ -83,20 +82,12 @@ Perform these stages in this exact order:
 
 After combining the four independently shuffled suits, apply Fisher–Yates one more time to the complete 40-card deck, using fresh CSPRNG draws. **Both stages are mandatory: shuffle each suit separately, then shuffle the combined 40-card deck.** Do not combine the suits before their individual shuffles are complete.
 
-### 3.4 Four Hands dealing algorithm
+### 3.4 Mode-specific dealing notes
 
-1. Player 1 is the first dealer.
-2. Deal two cards to Player 1, then two to Player 2, then two to Player 3, then two to Player 4.
-3. Repeat the same P1 → P2 → P3 → P4 order for five cycles, giving each player 10 cards.
-4. Preserve each player's received card order. Do not shuffle or reorder any player's hand after dealing.
+- Four Hands: Player 1 is the first dealer. The universal dealing rule in Section 3.1 gives each of the four players 10 cards over five cycles.
+- Two Hands: both rounds use the universal dealing rule in Section 3.1. Round 2 does not involve a new shuffle; continue from the next cards in the preserved original deck order.
 
-### 3.5 Two Hands dealing and Round 2
-
-- For each Two Hands deal, deal two cards to Player 1, then two cards to Player 2, and repeat that order until each player has 10 cards for that deal.
-- Apply the same dealing sequence in both Round 1 and Round 2.
-- Do not perform a new shuffle before Round 2. Continue with the original deck order.
-
-### 3.6 Mandatory shuffle and deal validation
+### 3.5 Mandatory shuffle and deal validation
 
 Before play begins, validate that:
 
