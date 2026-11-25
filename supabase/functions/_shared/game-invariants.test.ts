@@ -52,7 +52,7 @@ Deno.test("card ledger rejects altered suit or rank data", () => {
 });
 
 Deno.test("build integrity accepts a valid two-player build", () => {
-  const state = { builds: [{ id: "b1", value: 7, ownerSeat: 1, team: 1, cards: [allCards[0], allCards[11]] }] };
+  const state = { builds: [{ id: "b1", value: 7, ownerSeat: 1, team: 1, cards: [allCards[2], allCards[13]] }] };
   validateBuildIntegrity(state, twoPlayers);
 });
 
