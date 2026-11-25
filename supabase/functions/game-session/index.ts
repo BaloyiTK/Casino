@@ -155,8 +155,9 @@ Deno.serve(async (request: Request) => {
       .eq("room_id", roomId)
       .order("seat");
     if (playersError) throw playersError;
+    const roomPlayers = (players ?? []) as PlayerRow[];
 
-    const ownPlayer = (players ?? []).find((player: PlayerRow) => player.user_id === userId) as PlayerRow | undefined;
+    const ownPlayer = roomPlayers.find((player) => player.user_id === userId);
     if (!ownPlayer) throw new Error("You are not a member of this room.");
 
     let { data: game, error: gameError } = await admin
@@ -169,10 +170,10 @@ Deno.serve(async (request: Request) => {
     if (!game && action === "start") {
       if (room.host_user_id !== userId) throw new Error("Only the room host can start the game.");
       if (room.status !== "waiting") throw new Error("This room is not waiting to start.");
-      if (players.length !== room.max_players) throw new Error("Wait until every player slot is filled.");
+      if (roomPlayers.length !== room.max_players) throw new Error("Wait until every player slot is filled.");
 
       const deck = createShuffledDeck();
-      const orderedPlayers = players as PlayerRow[];
+      const orderedPlayers = roomPlayers;
       if (orderedPlayers.length !== room.max_players ||
           orderedPlayers.some((player, index) => player.seat !== index + 1)) {
         throw new Error("Room seats are incomplete. Wait until every player has joined.");
