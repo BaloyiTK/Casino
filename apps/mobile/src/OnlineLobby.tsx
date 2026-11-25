@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, StyleSheet, Text, TextInput, View } from "react-native";
-import { createRoom, getGameSession, getRoom, isSupabaseConfigured, joinRoom, listPublicRooms, watchRoom, type OnlineGameSession, type RoomSummary, type RoomVisibility } from "./rooms";
+import { applyGameAction, createRoom, getGameSession, getRoom, isSupabaseConfigured, joinRoom, listPublicRooms, watchRoom, type OnlineGameSession, type RoomSummary, type RoomVisibility } from "./rooms";
 import OnlineGame from "./OnlineGame";
 import type { GameMode } from "./game";
 
@@ -76,6 +76,19 @@ export default function OnlineLobby() {
     finally { setBusy(false); }
   }
 
+  async function submitAction(action: "draft" | "end-turn", cardId?: string) {
+    if (!room) return;
+    setBusy(true); setError("");
+    try {
+      setGameSession(await applyGameAction(room.room_id, action, cardId));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not apply that move.");
+      try { setGameSession(await getGameSession(room.room_id, "get")); } catch { /* Keep the original action error visible. */ }
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function share() {
     if (!room) return;
     await Share.share({ message: "Join my Casino game. Room code: " + room.room_code });
@@ -88,7 +101,7 @@ export default function OnlineLobby() {
         <Text style={styles.kicker}>{gameSession ? "LIVE GAME" : room ? "WAITING LOBBY" : "THE TABLE IS YOURS"}</Text>
         <Text style={styles.hero}>{gameSession ? "Your game is underway." : room ? "Your table is ready." : "Every card has a purpose."}</Text>
         {room ? (gameSession ? (
-          <OnlineGame session={gameSession} room={room} />
+          <OnlineGame session={gameSession} room={room} busy={busy} onDraft={(cardId) => void submitAction("draft", cardId)} onEndTurn={() => void submitAction("end-turn")} />
         ) : (
           <View style={styles.panel}>
             <Text style={styles.label}>{(room.visibility ?? "private").toUpperCase()} ROOM · {room.game_mode === "two" ? "TWO HANDS" : "FOUR HANDS"}</Text>
