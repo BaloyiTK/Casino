@@ -126,12 +126,13 @@ These are distinct. Team affiliation does not automatically give the partner ind
 
 ### 4.2 Capture
 
-- **Capture a build:** A player captures a build using one single card from their hand whose value matches the build value. A combination of cards cannot be used to capture a build.
-- A player may capture their own build or an opponent's build, provided they have the single matching card.
+- **Capture a build:** A player may capture a build by combining cards from the floor and the visible top cards of opponents' captured-card piles. The combination must match the build value.
+- A player may capture their own build or an opponent's build, provided they can make the required matching combination using eligible cards.
 - A player cannot capture their partner's build while the partner remains its individual owner.
 - A capture collects the entire build, including its original cards and all additions made to it.
-- The single card used to capture the build is also collected.
-- Captured cards must be removed from the floor/build and recorded in the capturing player's collection.
+- All cards used in the capture combination are collected as part of the capture.
+- Cards used from the floor or opponents' captured-card piles must be removed from their previous locations and recorded in the capturing player's collection.
+- Only the top card of each opponent's captured-card pile is visible and eligible to use in a combination. When that top card is used, the next card underneath becomes the visible top card and is then eligible to use.
 - Never count a card both as part of a build and as collected.
 ### 4.3 Recover
 
@@ -148,7 +149,7 @@ A loose card is not automatically a team build: if Player 1 plays a 7 as a loose
 - A partner may ask the current individual owner to pass the build to them.
 - The current owner decides whether to grant the request.
 - If the owner grants the pass, individual ownership transfers to the partner.
-- The new owner may then capture the build, provided they have the single matching card.
+- The new owner may then capture the build, provided they can make the required matching combination using eligible cards.
 - A partner does not automatically receive ownership.
 - Do not describe ownership transfer as something the partner can initiate unilaterally.
 
@@ -199,7 +200,7 @@ Before accepting a move, validate:
 
 1. The player actually holds every card they intend to play.
 2. Every floor/build card used is present and eligible.
-3. Any combination used to build is valid, and any capture uses one single card matching the build value.
+3. Any combination used to build or capture is valid; a capture combination must use eligible floor cards and visible top cards from opponents' captured-card piles and match the build value.
 4. The action respects individual ownership and partnership rules.
 5. No card has already been used, captured, or moved elsewhere.
 
