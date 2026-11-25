@@ -3,6 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow } from "../_shared/game-invariants.ts";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
+};
+
 function dealNextTwoHandsRound(players: PlayerRow[], state: Record<string, any>) {
   const deck = state.deck as Card[];
   const hands = state.hands as Record<string, Card[]>;
