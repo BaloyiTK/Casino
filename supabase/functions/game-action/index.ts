@@ -80,7 +80,7 @@ Deno.serve(async (request: Request) => {
     const roomId = typeof body.roomId === "string" ? body.roomId : "";
     const action = body.action;
     if (!roomId) throw new Error("A room ID is required.");
-    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build" && action !== "capture-loose" && action !== "shiya") throw new Error("Unsupported game action.");
+    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build" && action !== "capture-loose" && action !== "shiya" && action !== "request-build-transfer" && action !== "approve-build-transfer" && action !== "reject-build-transfer") throw new Error("Unsupported game action.");
 
     const { data: room, error: roomError } = await admin
       .from("casino_rooms").select("id, game_mode").eq("id", roomId).maybeSingle();
@@ -105,7 +105,7 @@ Deno.serve(async (request: Request) => {
     if (gameError) throw gameError;
     if (!game) throw new Error("The host has not started this game.");
     if (game.status !== "playing") throw new Error("This game is complete and no longer accepts actions.");
-    if (game.current_seat !== player.seat) throw new Error("It is not your turn.");
+    if (game.current_seat !== player.seat && !["request-build-transfer", "approve-build-transfer", "reject-build-transfer"].includes(action)) throw new Error("It is not your turn.");
 
     const { data: privateRow, error: privateError } = await admin
       .from("casino_game_private_state")
@@ -115,7 +115,7 @@ Deno.serve(async (request: Request) => {
     if (privateError) throw privateError;
 
     const state = JSON.parse(JSON.stringify(privateRow.state)) as Record<string, any>;
-    if (state.currentSeat !== player.seat) throw new Error("The game turn is out of sync. Refresh and try again.");
+    if (state.currentSeat !== player.seat && !["request-build-transfer", "approve-build-transfer", "reject-build-transfer"].includes(action)) throw new Error("The game turn is out of sync. Refresh and try again.");
     const hands = state.hands as Record<string, Card[]>;
     const ownHand = hands[String(player.seat)];
     if (!Array.isArray(ownHand)) throw new Error("Your hand is missing from the game state.");
@@ -128,6 +128,33 @@ Deno.serve(async (request: Request) => {
       state.forfeit = { losingTeam: pending.team, winningTeam: pending.team === 1 ? 2 : 1, pointsAwarded: 11, reason: "Shiya capture requirement not completed." };
       state.message = `Team ${state.forfeit.winningTeam} wins all 11 points: the Shiya player did not capture one of the two builds.`;
       nextStatus = "game-complete";
+    } else if (action === "request-build-transfer" || action === "approve-build-transfer" || action === "reject-build-transfer") {
+      if (players.length !== 4) throw new Error("Partner ownership requests are only available in Four Hands.");
+      const buildId = typeof body.buildId === "string" ? body.buildId : "";
+      const builds = state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>;
+      const build = builds.find((item) => item.id === buildId);
+      if (!build) throw new Error("That build is no longer active.");
+      const teamOf = (seat: number) => seat % 2 === 1 ? 1 : 2;
+      const requests = (state.ownershipRequests ?? []) as Array<{ id: string; buildId: string; requesterSeat: number; ownerSeat: number; status: string }>;
+      if (action === "request-build-transfer") {
+        if (build.ownerSeat === player.seat || build.team !== teamOf(player.seat)) throw new Error("You can only request a build owned by your partner.");
+        if (requests.some((request) => request.buildId === buildId && request.status === "pending")) throw new Error("A transfer request is already pending for this build.");
+        requests.push({ id: crypto.randomUUID(), buildId, requesterSeat: player.seat, ownerSeat: build.ownerSeat, status: "pending" });
+        state.ownershipRequests = requests;
+        state.message = "Seat " + player.seat + " requested ownership of their partner build.";
+      } else {
+        const requestIndex = requests.findIndex((request) => request.buildId === buildId && request.status === "pending" && request.ownerSeat === player.seat);
+        if (requestIndex < 0) throw new Error("There is no pending request for this build that you own.");
+        if (action === "approve-build-transfer") {
+          build.ownerSeat = requests[requestIndex].requesterSeat;
+          requests[requestIndex].status = "approved";
+          state.message = "Seat " + player.seat + " approved the ownership transfer.";
+        } else {
+          requests[requestIndex].status = "rejected";
+          state.message = "Seat " + player.seat + " declined the ownership transfer.";
+        }
+        state.ownershipRequests = requests;
+      }
     } else if (action === "draft") {
       const cardId = typeof body.cardId === "string" ? body.cardId : "";
       const index = ownHand.findIndex((card) => card.id === cardId);
@@ -366,15 +393,23 @@ Deno.serve(async (request: Request) => {
 
     validateCardLedger(state);
 
-    const { data: newVersion, error: commitError } = await admin.rpc("casino_commit_game_action", {
-      p_game_id: game.id,
-      p_actor_user_id: userId,
-      p_expected_version: privateRow.version,
-      p_next_state: state,
-      p_next_round: state.round,
-      p_next_seat: state.currentSeat,
-      p_next_status: nextStatus
-    });
+    const transferAction = ["request-build-transfer", "approve-build-transfer", "reject-build-transfer"].includes(action);
+    const { data: newVersion, error: commitError } = transferAction
+      ? await admin.rpc("casino_commit_partner_transfer", {
+          p_game_id: game.id,
+          p_actor_user_id: userId,
+          p_expected_version: privateRow.version,
+          p_next_state: state
+        })
+      : await admin.rpc("casino_commit_game_action", {
+          p_game_id: game.id,
+          p_actor_user_id: userId,
+          p_expected_version: privateRow.version,
+          p_next_state: state,
+          p_next_round: state.round,
+          p_next_seat: state.currentSeat,
+          p_next_status: nextStatus
+        });
     if (commitError) throw commitError;
 
     const currentPlayer = players.find((item) => item.user_id === userId)!;
@@ -396,6 +431,7 @@ Deno.serve(async (request: Request) => {
         .map(([seat, hand]) => ({ seat: Number(seat), handCount: hand.length })),
       floor: latestFloor,
       builds: (state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>).map((build) => ({ id: build.id, value: build.value, ownerSeat: build.ownerSeat, team: build.team, cards: build.cards })),
+      ownershipRequests: state.ownershipRequests ?? [],
       capturedPiles: Object.entries(state.capturedPiles as Record<string, Card[]>).map(([seat, pile]) => ({ seat: Number(seat), count: pile.length, topCard: pile.length ? pile[pile.length - 1] : null })),
       deckCount: latestDeck.length
     };
