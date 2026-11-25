@@ -121,17 +121,20 @@ The playing rules include Drafting, Build, Capture, Recover, and Partner Assist.
 
 Building and capturing are different actions.
 
+- A build's value cannot exceed 10.
 - A player may own no more than one active build at a time.
 - A player cannot create a second build while they already own an active build.
 - Two active builds may not have the same value.
 
-- **Create a build:** A player combines cards genuinely available from their own hand with eligible cards on the floor or in an existing build, as permitted by the build rules.
+- **Create a build:** A player combines cards genuinely available from their own hand with eligible cards on the floor or in an existing build, as permitted by the build rules. A valid build value cannot exceed 10.
+- **Using opponents' captured-pile cards when creating a build:** A player may also use eligible visible top cards from opponents' captured-card piles in the combination that creates a new build, but only if at least one active build already exists on the floor. This condition is satisfied even when that active build was created earlier in the same turn. The player may combine their own card(s) with eligible opponent-pile top card(s) to make the new build value.
+- **Example — creating a build with opponent-pile cards:** If an opponent's captured pile has a 2 on top, another opponent's captured pile has a 4 on top, and the player holds an Ace (1), the player may combine 1 + 2 + 4 = 7 to create a new build valued at 7, provided at least one active build already exists on the floor. A separate loose 5 on the floor is not part of that combination.
 - A player may use one card, two cards, three cards, four cards, or more in a valid combination, if those cards are actually available to that player.
 - **A player cannot create a build with a value that is already represented by a card on the floor.** Check the current floor before creating the build; if a floor card already has that value, the build cannot be created at that value.
 - A player may create and build their own build.
 - A player may assist by adding further valid combinations to their partner's existing build to maintain/top it. These additions belong to the partner's existing build; they do not make the assisting player its individual owner.
 - Any addition to an existing build must match that build's existing value. An addition must not change the build's value.
-- A player cannot create, build, or add to an opponent's build.
+- A player cannot create, build, or add to an opponent's existing build. Adding cards to another player's build does not transfer or change its individual ownership.
 - Every card used in a build or top-up action must be genuinely held by the player or legitimately available on the table/build. A player cannot use a card they do not have.
 
 **Example:** If Player 1 finds a 2 on the floor and uses a 5 from their hand, Player 1 creates a build of 7.
