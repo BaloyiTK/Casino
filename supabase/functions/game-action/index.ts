@@ -146,6 +146,7 @@ Deno.serve(async (request: Request) => {
       } else {
         const requestIndex = requests.findIndex((request) => request.buildId === buildId && request.status === "pending" && request.ownerSeat === player.seat);
         if (requestIndex < 0) throw new Error("There is no pending request for this build that you own.");
+        if (build.ownerSeat !== player.seat || build.team !== teamOf(player.seat)) throw new Error("This request is no longer valid because build ownership has changed.");
         if (action === "approve-build-transfer") {
           build.ownerSeat = requests[requestIndex].requesterSeat;
           requests[requestIndex].status = "approved";
@@ -248,6 +249,11 @@ Deno.serve(async (request: Request) => {
       const alreadyOwnsBuild = builds.some((item) => item.ownerSeat === player.seat);
       if (alreadyOwnsBuild && builds.filter((item) => item.ownerSeat === player.seat).length !== 1) throw new Error("You cannot Shiya while already owning two builds.");
       build.ownerSeat = player.seat;
+      const pendingRequests = (state.ownershipRequests ?? []) as Array<{ buildId: string; status: string }>;
+      for (const request of pendingRequests) {
+        if (request.buildId === buildId && request.status === "pending") request.status = "cancelled";
+      }
+      state.ownershipRequests = pendingRequests;
       if (alreadyOwnsBuild) {
         state.shiyaPending = { seat: player.seat, team: playerTeam, buildIds: builds.filter((item) => item.ownerSeat === player.seat).map((item) => item.id) };
       }
