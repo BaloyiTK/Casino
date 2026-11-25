@@ -258,3 +258,10 @@ After every move, reconcile the complete card ledger. If any check fails, stop i
 - Do not change a rule to make a simulation or software implementation easier.
 - If a rule is unclear or not documented, mark it as unspecified and ask the game owner.
 - When the game owner explicitly changes or clarifies a rule, update this file and record the change in the Git history.
+
+### 3.6 Private hands and player visibility
+
+- Each player may see their own hand face-up on their own screen.
+- A player must not be able to see any other player's hand.
+- The interface must keep each player's hand private from the other players.
+
