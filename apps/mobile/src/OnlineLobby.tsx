@@ -85,13 +85,13 @@ export default function OnlineLobby() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.page}>
-        <Text style={styles.kicker}>{room ? "WAITING LOBBY" : "THE TABLE IS YOURS"}</Text>
-        <Text style={styles.hero}>{room ? "Your table is ready." : "Every card has a purpose."}</Text>
+        <Text style={styles.kicker}>{gameSession ? "LIVE GAME" : room ? "WAITING LOBBY" : "THE TABLE IS YOURS"}</Text>
+        <Text style={styles.hero}>{gameSession ? "Your game is underway." : room ? "Your table is ready." : "Every card has a purpose."}</Text>
         {room ? (gameSession ? (
           <OnlineGame session={gameSession} room={room} />
         ) : (
           <View style={styles.panel}>
-            <Text style={styles.label}>{room.visibility.toUpperCase()} ROOM · {room.game_mode === "two" ? "TWO HANDS" : "FOUR HANDS"}</Text>
+            <Text style={styles.label}>{(room.visibility ?? "private").toUpperCase()} ROOM · {room.game_mode === "two" ? "TWO HANDS" : "FOUR HANDS"}</Text>
             <Text style={styles.code}>{room.room_code}</Text>
             <Pressable onPress={share} style={styles.primary}><Text style={styles.primaryText}>SHARE INVITE</Text></Pressable>
             <Text style={styles.label}>PLAYERS · {room.occupied_slots}/{room.max_players}</Text>
