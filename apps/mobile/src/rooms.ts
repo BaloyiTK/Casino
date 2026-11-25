@@ -12,6 +12,7 @@ export interface RoomSummary {
   status?: string;
   visibility?: RoomVisibility;
   seat?: number;
+  players?: Array<{ seat: number; display_name: string; is_host: boolean }>;
 }
 
 function client() {
@@ -71,4 +72,13 @@ export function watchRoom(roomId: string, onChange: () => void) {
   return () => {
     void client().removeChannel(channel);
   };
+}
+
+export async function getRoom(roomId: string): Promise<RoomSummary> {
+  await requireSupabaseSession();
+  const { data, error } = await client().rpc("casino_get_room", {
+    p_room_id: roomId
+  });
+  if (error) throw error;
+  return data as RoomSummary;
 }
