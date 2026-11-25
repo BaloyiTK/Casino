@@ -9,19 +9,22 @@ type Props = {
   onDraft: (cardId: string) => void;
   onEndTurn: () => void;
   onCreateBuild: (combination: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }) => void;
+  onTopUp: (buildId: string, handCardIds: string[]) => void;
 };
 
 function cardLabel(card: { rank: number; suit: string }) {
   return `${card.rank === 1 ? "A" : card.rank}${card.suit}`;
 }
 
-export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild }: Props) {
+export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp }: Props) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [buildMode, setBuildMode] = useState(false);
   const [buildHandIds, setBuildHandIds] = useState<string[]>([]);
   const [buildFloorIds, setBuildFloorIds] = useState<string[]>([]);
+  const [topUpBuildId, setTopUpBuildId] = useState<string | null>(null);
+  const [topUpHandIds, setTopUpHandIds] = useState<string[]>([]);
   const myTurn = session.currentSeat === session.ownSeat && session.phase === "playing";
-  useEffect(() => { setSelectedCardId(null); setBuildMode(false); setBuildHandIds([]); setBuildFloorIds([]); }, [session.version]);
+  useEffect(() => { setSelectedCardId(null); setBuildMode(false); setBuildHandIds([]); setBuildFloorIds([]); setTopUpBuildId(null); setTopUpHandIds([]); }, [session.version]);
   const toggleId = (ids: string[], id: string) => ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id];
   const buildValue = [...session.ownHand.filter((card) => buildHandIds.includes(card.id)), ...session.floor.filter((card) => buildFloorIds.includes(card.id))].reduce((sum, card) => sum + card.rank, 0);
   const clearBuildSelection = () => { setBuildHandIds([]); setBuildFloorIds([]); setBuildMode(false); };
@@ -66,6 +69,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
             <View>
               <Text style={styles.buildValue}>VALUE {build.value}</Text>
               <Text style={styles.buildOwner}>Owned by {nameForSeat(build.ownerSeat)} · Team {build.team}</Text>
+              {session.gameMode === "four" && build.ownerSeat !== session.ownSeat && build.team === (session.ownSeat % 2 === 1 ? 1 : 2) ? <Pressable disabled={!myTurn || busy} onPress={() => { setBuildMode(false); setTopUpBuildId(build.id); setTopUpHandIds([]); setSelectedCardId(null); }} style={styles.topUpButton}><Text style={styles.topUpButtonText}>TOP UP PARTNER BUILD</Text></Pressable> : null}
             </View>
             <View style={styles.buildCards}>
               {build.cards.map((card) => <Text key={card.id} style={[styles.buildCard, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>)}
@@ -77,9 +81,9 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
       <Text style={styles.section}>YOUR HAND · {session.ownHandCount} CARDS</Text>
       <View style={styles.hand}>
         {session.ownHand.map((card, index) => (
-          <Pressable key={card.id} onPress={() => buildMode ? setBuildHandIds((ids) => toggleId(ids, card.id)) : setSelectedCardId(card.id)} disabled={!myTurn || busy} style={[styles.ownCard, (buildMode ? buildHandIds.includes(card.id) : selectedCardId === card.id) && styles.selectedCard]}>
+          <Pressable key={card.id} onPress={() => buildMode ? setBuildHandIds((ids) => toggleId(ids, card.id)) : topUpBuildId ? setTopUpHandIds((ids) => toggleId(ids, card.id)) : setSelectedCardId(card.id)} disabled={!myTurn || busy} style={[styles.ownCard, (buildMode ? buildHandIds.includes(card.id) : topUpBuildId ? topUpHandIds.includes(card.id) : selectedCardId === card.id) && styles.selectedCard]}>
             <Text style={[styles.cardFace, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>
-            <Text style={styles.cardIndex}>{buildMode ? buildHandIds.includes(card.id) ? "BUILD" : index + 1 : index + 1}</Text>
+            <Text style={styles.cardIndex}>{buildMode ? buildHandIds.includes(card.id) ? "BUILD" : index + 1 : topUpBuildId ? topUpHandIds.includes(card.id) ? "TOP UP" : index + 1 : index + 1}</Text>
           </Pressable>
         ))}
       </View>
@@ -94,6 +98,16 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
               <View style={styles.actionRow}>
                 <Pressable onPress={() => onCreateBuild({ handCardIds: buildHandIds, floorCardIds: buildFloorIds, opponentPileCardIds: [] })} disabled={!myTurn || busy || buildHandIds.length === 0 || buildValue < 1 || buildValue > 10} style={[styles.actionButton, (!myTurn || busy || buildHandIds.length === 0 || buildValue < 1 || buildValue > 10) && styles.disabled]}><Text style={styles.actionText}>CREATE BUILD</Text></Pressable>
                 <Pressable onPress={clearBuildSelection} disabled={busy} style={styles.endButton}><Text style={styles.actionText}>CANCEL</Text></Pressable>
+              </View>
+            </View>
+          ) : topUpBuildId ? (
+            <View style={styles.buildPanel}>
+              <Text style={styles.buildTotal}>PARTNER BUILD TOP-UP</Text>
+              <Text style={styles.actionHint}>Select cards from your hand that add up exactly to the selected build value. The build owner and value will not change.</Text>
+              <Text style={styles.actionHint}>{topUpHandIds.length} hand card(s) selected</Text>
+              <View style={styles.actionRow}>
+                <Pressable onPress={() => onTopUp(topUpBuildId, topUpHandIds)} disabled={!myTurn || busy || topUpHandIds.length === 0} style={[styles.actionButton, (!myTurn || busy || topUpHandIds.length === 0) && styles.disabled]}><Text style={styles.actionText}>ADD TO BUILD</Text></Pressable>
+                <Pressable onPress={() => { setTopUpBuildId(null); setTopUpHandIds([]); }} disabled={busy} style={styles.endButton}><Text style={styles.actionText}>CANCEL</Text></Pressable>
               </View>
             </View>
           ) : (
@@ -151,6 +165,8 @@ const styles = StyleSheet.create({
   buildRow: { borderTopWidth: 1, borderColor: "#e5e4db", paddingVertical: 11, marginTop: 10 },
   buildValue: { color: "#174c39", fontSize: 15, fontWeight: "800" },
   buildOwner: { color: "#7c877e", fontSize: 10, marginTop: 3 },
+  topUpButton: { backgroundColor: "#e9ede5", borderWidth: 1, borderColor: "#b9c8b8", paddingHorizontal: 9, paddingVertical: 7, marginTop: 8, alignSelf: "flex-start" },
+  topUpButtonText: { color: "#245b43", fontSize: 8, fontWeight: "800", letterSpacing: 0.5 },
   buildCards: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 8 },
   buildCard: { color: "#1b2a22", backgroundColor: "#f0f0e8", paddingHorizontal: 8, paddingVertical: 5, fontSize: 12, fontWeight: "800" },
   section: { color: "#8d7955", fontSize: 10, fontWeight: "800", letterSpacing: 1.5, marginBottom: 11, marginTop: 5 },
