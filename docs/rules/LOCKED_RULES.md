@@ -44,6 +44,16 @@ The game has two modes:
 
 ## 3. Shuffle and dealing algorithm
 
+### 3.1 Universal dealing rule — every mode and every round
+
+For every deal, regardless of game mode or round, deal **two cards to each player in player order**, then repeat that same order until every player has received 10 cards for that deal. Do not deal all 10 cards to one player before moving to the next player.
+
+The player order is the normal player order for the mode:
+- Two Hands: Player 1, then Player 2; repeat.
+- Four Hands: Player 1, then Player 2, then Player 3, then Player 4; repeat.
+
+This rule applies to the initial deal and every subsequent deal, including Round 2 in Two Hands.
+
 The shuffle algorithm for **every shuffle performed in the game is Fisher–Yates**. This applies without exception to each individual suit, the combined 40-card deck, each player's hand, and any other shuffle explicitly required by the game rules. Every random choice in every shuffle must come from a **cryptographically secure random number generator (CSPRNG)**. No other shuffle algorithm or random source may be substituted. This is the required algorithm, not merely a general instruction to shuffle.
 
 ### 3.1 Fisher–Yates algorithm
@@ -80,8 +90,9 @@ After combining the four independently shuffled suits, apply Fisher–Yates one 
 
 ### 3.4 Two Hands dealing and Round 2
 
-- For the Two Hands mode, deal two cards to Player 1, then two to Player 2, repeating until each player has 10 cards for the round.
-- Do not perform a new shuffle before Round 2. Continue with the original deck order and repeat the two-cards-to-Player-1, then two-cards-to-Player-2 dealing sequence until each player has 10 cards for Round 2.
+- For each Two Hands deal, deal two cards to Player 1, then two cards to Player 2, and repeat that order until each player has 10 cards for that deal.
+- Apply the same dealing sequence in both Round 1 and Round 2.
+- Do not perform a new shuffle before Round 2. Continue with the original deck order.
 
 ### 3.5 Mandatory shuffle and deal validation
 
