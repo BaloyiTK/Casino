@@ -254,6 +254,7 @@ Deno.serve(async (request: Request) => {
         .filter(([seat]) => Number(seat) !== currentPlayer.seat)
         .map(([seat, hand]) => ({ seat: Number(seat), handCount: hand.length })),
       floor: latestFloor,
+      builds: (state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>).map((build) => ({ id: build.id, value: build.value, ownerSeat: build.ownerSeat, team: build.team, cards: build.cards })),
       deckCount: latestDeck.length
     };
 
