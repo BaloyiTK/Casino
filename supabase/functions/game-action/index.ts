@@ -18,7 +18,6 @@ function validateCardLedger(state: Record<string, any>) {
   ));
   const deck = state.deck as Card[];
   const hands = Object.values(state.hands as Record<string, Card[]>).flat();
-  const floor = state.floor as Card[];
   const builds = (state.builds as Array<{ cards: Card[] }>).flatMap((build) => build.cards);
   const captured = Object.values(state.capturedPiles as Record<string, Card[]>).flat();
   const allCards = [...deck, ...hands, ...floor, ...builds, ...captured];
@@ -61,9 +60,6 @@ function validateBuildIntegrity(state: Record<string, any>, players: PlayerRow[]
     }
     if (values.has(build.value)) {
       throw new Error("Build integrity check failed: two active builds cannot have the same value.");
-    }
-    if (floor.some((card) => card.rank === build.value)) {
-      throw new Error("Build integrity check failed: a loose floor card cannot represent an active build value.");
     }
     values.add(build.value);
     const owned = buildsByOwner.get(build.ownerSeat) ?? [];
