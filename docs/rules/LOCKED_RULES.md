@@ -46,7 +46,7 @@ Follow this exact sequence:
 
 1. Create the complete 40-card deck (Ace through 10 in each suit).
 2. Independently shuffle the ranks 1–10 within each suit.
-3. Combine the four suits into one 40-card deck.
+3. After all four suits have been independently shuffled, combine the four shuffled suits into one 40-card deck.
 4. Shuffle the complete 40-card deck.
 5. Player 1 is the first dealer.
 6. Deal two cards to Player 1, then two to Player 2, then two to Player 3, then two to Player 4.
