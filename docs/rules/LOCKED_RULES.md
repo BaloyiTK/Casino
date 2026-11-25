@@ -123,6 +123,7 @@ Building and capturing are different actions.
 
 - A player may own no more than one active build at a time.
 - A player cannot create a second build while they already own an active build.
+- Two active builds may not have the same value.
 
 - **Create a build:** A player combines cards genuinely available from their own hand with eligible cards on the floor or in an existing build, as permitted by the build rules.
 - A player may use one card, two cards, three cards, four cards, or more in a valid combination, if those cards are actually available to that player.
