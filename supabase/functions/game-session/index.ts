@@ -88,7 +88,7 @@ function dealInitialHands(players: PlayerRow[], deck: Card[]) {
   return hands;
 }
 
-function publicSession(state: Record<string, unknown>, player: PlayerRow, game: Record<string, unknown>) {
+function publicSession(state: Record<string, unknown>, player: PlayerRow, game: Record<string, unknown>, version: number) {
   const hands = state.hands as Record<string, Card[]>;
   const deck = state.deck as Card[];
   const floor = state.floor as Card[];
@@ -218,7 +218,7 @@ Deno.serve(async (request: Request) => {
       .single();
     if (privateError) throw privateError;
 
-    const response = publicSession(privateRow.state as Record<string, unknown>, ownPlayer, game);
+    const response = publicSession(privateRow.state as Record<string, unknown>, ownPlayer, game, privateRow.version);
     return new Response(JSON.stringify(response), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
