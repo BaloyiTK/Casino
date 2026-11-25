@@ -12,13 +12,14 @@ type Props = {
   onTopUp: (buildId: string, handCardIds: string[]) => void;
   onCaptureBuild: (buildId: string, selection: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }) => void;
   onCaptureLoose: (handCardId: string, floorCardId: string) => void;
+  onShiya: (buildId: string) => void;
 };
 
 function cardLabel(card: { rank: number; suit: string }) {
   return `${card.rank === 1 ? "A" : card.rank}${card.suit}`;
 }
 
-export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose }: Props) {
+export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose, onShiya }: Props) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [buildMode, setBuildMode] = useState(false);
   const [buildHandIds, setBuildHandIds] = useState<string[]>([]);
@@ -81,6 +82,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
               <Text style={styles.buildValue}>VALUE {build.value}</Text>
               <Text style={styles.buildOwner}>Owned by {nameForSeat(build.ownerSeat)} · Team {build.team}</Text>
               {session.gameMode === "four" && build.ownerSeat !== session.ownSeat && build.team === (session.ownSeat % 2 === 1 ? 1 : 2) ? <Pressable disabled={!myTurn || busy} onPress={() => { setBuildMode(false); setTopUpBuildId(build.id); setTopUpHandIds([]); setSelectedCardId(null); }} style={styles.topUpButton}><Text style={styles.topUpButtonText}>TOP UP PARTNER BUILD</Text></Pressable> : null}
+            {session.gameMode === "four" && build.ownerSeat !== session.ownSeat && build.team === (session.ownSeat % 2 === 1 ? 1 : 2) ? <Pressable disabled={!myTurn || busy} onPress={() => onShiya(build.id)} style={styles.topUpButton}><Text style={styles.topUpButtonText}>SHIYA · TAKE OWNERSHIP</Text></Pressable> : null}
             </View>
             {!(session.gameMode === "four" && build.ownerSeat !== session.ownSeat && build.team === (session.ownSeat % 2 === 1 ? 1 : 2)) ? <Pressable disabled={!myTurn || busy} onPress={() => { setBuildMode(false); setTopUpBuildId(null); setCaptureBuildId(build.id); setCaptureHandIds([]); setCaptureFloorIds([]); setCapturePileIds([]); setSelectedCardId(null); }} style={styles.topUpButton}><Text style={styles.topUpButtonText}>CAPTURE BUILD</Text></Pressable> : null}
             <View style={styles.buildCards}>
