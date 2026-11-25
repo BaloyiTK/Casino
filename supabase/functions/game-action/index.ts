@@ -79,7 +79,7 @@ Deno.serve(async (request: Request) => {
     const roomId = typeof body.roomId === "string" ? body.roomId : "";
     const action = body.action;
     if (!roomId) throw new Error("A room ID is required.");
-    if (action !== "draft" && action !== "end-turn") throw new Error("Unsupported game action.");
+    if (action !== "draft" && action !== "end-turn" && action !== "create-build") throw new Error("Unsupported game action.");
 
     const { data: room, error: roomError } = await admin
       .from("casino_rooms").select("id, game_mode").eq("id", roomId).maybeSingle();
@@ -127,6 +127,80 @@ Deno.serve(async (request: Request) => {
       const [card] = ownHand.splice(index, 1);
       (state.floor as Card[]).push(card);
       state.message = `Seat ${player.seat} drafted a card.`;
+    } else if (action === "create-build") {
+      const handCardIds = Array.isArray(body.handCardIds) ? body.handCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
+      const floorCardIds = Array.isArray(body.floorCardIds) ? body.floorCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
+      const opponentPileCardIds = Array.isArray(body.opponentPileCardIds) ? body.opponentPileCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
+      const allSelectedIds = [...handCardIds, ...floorCardIds, ...opponentPileCardIds];
+      if (allSelectedIds.length === 0 || new Set(allSelectedIds).size !== allSelectedIds.length) {
+        throw new Error("Select a valid combination of different cards.");
+      }
+      if (handCardIds.length === 0) throw new Error("A build must include at least one card from your own hand.");
+      const builds = state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>;
+      const floor = state.floor as Card[];
+      if (builds.some((build) => build.ownerSeat === player.seat)) {
+        throw new Error("You already own an active build.");
+      }
+
+      const selectedHand = handCardIds.map((id) => {
+        const index = ownHand.findIndex((card) => card.id === id);
+        if (index < 0) throw new Error("A selected hand card is not in your hand.");
+        return ownHand[index];
+      });
+      const selectedFloor = floorCardIds.map((id) => {
+        const index = floor.findIndex((card) => card.id === id);
+        if (index < 0) throw new Error("A selected floor card is not loose or available.");
+        return floor[index];
+      });
+
+      const capturedPiles = state.capturedPiles as Record<string, Card[]>;
+      const activeBuildExists = builds.length > 0;
+      if (opponentPileCardIds.length > 0 && !activeBuildExists) {
+        throw new Error("Opponent captured-pile cards may only be used when an active build already exists.");
+      }
+      const selectedOpponentPile: Card[] = [];
+      for (const id of opponentPileCardIds) {
+        let found: Card | undefined;
+        for (const [seatText, pile] of Object.entries(capturedPiles)) {
+          const pileSeat = Number(seatText);
+          const isOpponent = players.length === 2
+            ? pileSeat !== player.seat
+            : (pileSeat % 2) !== (player.seat % 2);
+          const top = pile[pile.length - 1];
+          if (isOpponent && top?.id === id) {
+            found = top;
+            break;
+          }
+        }
+        if (!found) throw new Error("Only the visible top card of an opponent's captured pile may be used.");
+        selectedOpponentPile.push(found);
+      }
+
+      const value = [...selectedHand, ...selectedFloor, ...selectedOpponentPile]
+        .reduce((total, card) => total + card.rank, 0);
+      if (value < 1 || value > 10) throw new Error("A build value must be between 1 and 10.");
+      if (floor.some((card) => card.rank === value)) {
+        throw new Error("A loose floor card already represents that value.");
+      }
+      if (builds.some((build) => build.value === value)) {
+        throw new Error("An active build already has that value.");
+      }
+
+      for (const id of handCardIds) ownHand.splice(ownHand.findIndex((card) => card.id === id), 1);
+      for (const id of floorCardIds) floor.splice(floor.findIndex((card) => card.id === id), 1);
+      for (const id of opponentPileCardIds) {
+        const pile = Object.values(capturedPiles).find((cards) => cards[cards.length - 1]?.id === id);
+        if (!pile) throw new Error("An opponent pile changed while creating the build.");
+        pile.pop();
+      }
+      builds.push({
+        id: crypto.randomUUID(),
+        value,
+        ownerSeat: player.seat,
+        team: players.length === 2 ? player.seat : (player.seat % 2 === 1 ? 1 : 2),
+        cards: [...selectedHand, ...selectedFloor, ...selectedOpponentPile]
+      });
+      state.message = `Seat ${player.seat} created a build worth ${value}.`;
     } else {
       const nextSeat = (player.seat % players.length) + 1;
       const allHandsEmpty = Object.values(hands).every((hand) => hand.length === 0);
