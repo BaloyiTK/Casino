@@ -68,7 +68,7 @@ For an array containing `n` cards:
 1. Set the current index `i` to the last array index (`n - 1`).
 2. Generate a uniformly distributed, cryptographically secure random integer `j` in the inclusive range `0..i`.
 3. Swap the cards at indexes `i` and `j`.
-4. Decrease `i) by one.
+4. Decrease `i` by one.
 5. Repeat steps 2–4 until `i` reaches 1.
 
 Use a CSPRNG-backed API such as Node.js `crypto.randomInt(0, i + 1)` (the upper bound is exclusive). Do not use `Math.random()` or a non-cryptographic/predictable random source.
