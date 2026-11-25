@@ -6,7 +6,7 @@ type GameState = Record<string, any>;
 
 export function validateCardLedger(state: GameState): void {
   const suits: Suit[] = ["♠", "♥", "♦", "♣"];
-  const expected = new Map(suits.flatMap((suit) =>
+  const expected = new Map<string, { suit: Suit; rank: number }>(suits.flatMap((suit) =>
     Array.from({ length: 10 }, (_, index) => {
       const rank = index + 1;
       return [`${suit}-${rank}`, { suit, rank }] as const;
