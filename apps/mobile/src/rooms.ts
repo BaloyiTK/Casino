@@ -98,6 +98,7 @@ export interface OnlineGameSession {
   floor: Array<{ id: string; suit: string; rank: number }>;
   builds: Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Array<{ id: string; suit: string; rank: number }> }>;
   capturedPiles: Array<{ seat: number; count: number; topCard: { id: string; suit: string; rank: number } | null }>;
+  ownershipRequests: Array<{ id: string; buildId: string; requesterSeat: number; ownerSeat: number; status: "pending" | "approved" | "rejected" }>;
   deckCount: number;
 }
 
@@ -120,7 +121,7 @@ export async function getGameSession(
 
 export async function applyGameAction(
   roomId: string,
-  action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose" | "shiya",
+  action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose" | "shiya" | "request-build-transfer" | "approve-build-transfer" | "reject-build-transfer",
   cardId?: string,
   combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] },
   buildId?: string,
