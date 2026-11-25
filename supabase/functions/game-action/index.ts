@@ -31,6 +31,68 @@ function validateCardLedger(state: Record<string, any>) {
   }
 }
 
+function validateBuildIntegrity(state: Record<string, any>, players: PlayerRow[]) {
+  const builds = state.builds as Array<{
+    id: string;
+    value: number;
+    ownerSeat: number;
+    team: number;
+    cards: Card[];
+  }>;
+  const floor = state.floor as Card[];
+  const validSeats = new Set(players.map((player) => player.seat));
+  const values = new Set<number>();
+  const buildsByOwner = new Map<number, string[]>();
+
+  for (const build of builds) {
+    if (!build.id || !validSeats.has(build.ownerSeat)) {
+      throw new Error("Build integrity check failed: every active build must have a valid owner.");
+    }
+    const expectedTeam = players.length === 2
+      ? build.ownerSeat
+      : (build.ownerSeat % 2 === 1 ? 1 : 2);
+    if (build.team !== expectedTeam) {
+      throw new Error("Build integrity check failed: build team does not match its individual owner.");
+    }
+    if (!Number.isInteger(build.value) || build.value < 1 || build.value > 10 ||
+      !Array.isArray(build.cards) || build.cards.length === 0 ||
+      build.cards.reduce((total, card) => total + card.rank, 0) !== build.value) {
+      throw new Error("Build integrity check failed: build cards must add up to a value from 1 to 10.");
+    }
+    if (values.has(build.value)) {
+      throw new Error("Build integrity check failed: two active builds cannot have the same value.");
+    }
+    if (floor.some((card) => card.rank === build.value)) {
+      throw new Error("Build integrity check failed: a loose floor card cannot represent an active build value.");
+    }
+    values.add(build.value);
+    const owned = buildsByOwner.get(build.ownerSeat) ?? [];
+    owned.push(build.id);
+    buildsByOwner.set(build.ownerSeat, owned);
+  }
+
+  for (const [ownerSeat, ownedBuildIds] of buildsByOwner) {
+    if (ownedBuildIds.length <= 1) continue;
+    const pending = state.shiyaPending as { seat: number; buildIds: string[] } | undefined;
+    const allowedIds = pending?.seat === ownerSeat ? pending.buildIds : [];
+    if (players.length !== 4 || ownedBuildIds.length !== 2 ||
+      ownedBuildIds.some((id) => !allowedIds.includes(id)) ||
+      allowedIds.length !== 2 || allowedIds.some((id) => !ownedBuildIds.includes(id))) {
+      throw new Error("Build integrity check failed: a player may own two builds only during a valid Shiya capture requirement.");
+    }
+  }
+
+  if (state.shiyaPending) {
+    const pending = state.shiyaPending as { seat: number; buildIds: string[] };
+    const ownedBuildIds = buildsByOwner.get(pending.seat) ?? [];
+    if (players.length !== 4 || ownedBuildIds.length !== 2 ||
+      pending.buildIds.length !== 2 ||
+      pending.buildIds.some((id) => !ownedBuildIds.includes(id))) {
+      throw new Error("Build integrity check failed: the pending Shiya state must identify exactly two builds owned by that player.");
+    }
+  }
+}
+
 function dealNextTwoHandsRound(players: PlayerRow[], state: Record<string, any>) {
   const deck = state.deck as Card[];
   const hands = state.hands as Record<string, Card[]>;
@@ -399,6 +461,7 @@ Deno.serve(async (request: Request) => {
     }
 
     validateCardLedger(state);
+    validateBuildIntegrity(state, players);
 
     const transferAction = ["request-build-transfer", "approve-build-transfer", "reject-build-transfer"].includes(action);
     const { data: newVersion, error: commitError } = transferAction
