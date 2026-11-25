@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import OnlineLobby from "./src/OnlineLobby";
 import {
   Pressable,
   SafeAreaView,
@@ -88,30 +89,7 @@ export default function App() {
           <Text style={styles.headerCaption}>OUR RULES. OUR GAME.</Text>
         </View>
 
-        {!game ? (
-          <ScrollView contentContainerStyle={styles.welcome}>
-            <Text style={styles.kicker}>THE TABLE IS YOURS</Text>
-            <Text style={styles.hero}>Every card{"\n"}has a <Text style={styles.heroItalic}>purpose.</Text></Text>
-            <Text style={styles.intro}>A custom South African Casino card game. Choose your table and deal the cards.</Text>
-            <View style={styles.setupPanel}>
-              <Text style={styles.sectionLabel}>CHOOSE YOUR GAME</Text>
-              <Pressable onPress={() => setMode("two")} style={[styles.modeOption, mode === "two" && styles.modeActive]}>
-                <Text style={styles.modeNumber}>02</Text>
-                <View style={styles.modeCopy}><Text style={styles.modeTitle}>Two Hands</Text><Text style={styles.modeSub}>1 vs 1 · Two rounds</Text></View>
-                <Text style={styles.radio}>{mode === "two" ? "●" : "○"}</Text>
-              </Pressable>
-              <Pressable onPress={() => setMode("four")} style={[styles.modeOption, mode === "four" && styles.modeActive]}>
-                <Text style={styles.modeNumber}>04</Text>
-                <View style={styles.modeCopy}><Text style={styles.modeTitle}>Four Hands</Text><Text style={styles.modeSub}>2 vs 2 · One round</Text></View>
-                <Text style={styles.radio}>{mode === "four" ? "●" : "○"}</Text>
-              </Pressable>
-              <Pressable onPress={beginGame} style={styles.primaryButton}>
-                <Text style={styles.primaryButtonText}>SHUFFLE & DEAL</Text><Text style={styles.primaryButtonArrow}>↗</Text>
-              </Pressable>
-              <Text style={styles.footnote}>40 CARDS · ACE TO 10 · NO FACE CARDS</Text>
-            </View>
-          </ScrollView>
-        ) : (
+        {!game ? <OnlineLobby /> : (
           <ScrollView contentContainerStyle={styles.gameContent}>
             <View style={styles.gameTitleRow}>
               <View>
