@@ -48,7 +48,7 @@ function dealNextTwoHandsRound(players: PlayerRow[], state: Record<string, any>)
       }
     }
   }
-  if (Object.values(hands).some((hand) => hand.length !== 10) || deck.length !== 0) {
+  if (Object.values(hands).some((hand) => hand.length !== 10) || Number(deck.length) !== 0) {
     throw new Error("Round 2 deal validation failed.");
   }
   state.round = 2;
