@@ -95,6 +95,7 @@ export interface OnlineGameSession {
   ownHandCount: number;
   opponents: Array<{ seat: number; handCount: number }>;
   floor: Array<{ id: string; suit: string; rank: number }>;
+  builds: Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Array<{ id: string; suit: string; rank: number }> }>;
   deckCount: number;
 }
 
