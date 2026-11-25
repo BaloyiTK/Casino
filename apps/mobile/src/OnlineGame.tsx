@@ -27,6 +27,8 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
   useEffect(() => { setSelectedCardId(null); setBuildMode(false); setBuildHandIds([]); setBuildFloorIds([]); setTopUpBuildId(null); setTopUpHandIds([]); }, [session.version]);
   const toggleId = (ids: string[], id: string) => ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id];
   const buildValue = [...session.ownHand.filter((card) => buildHandIds.includes(card.id)), ...session.floor.filter((card) => buildFloorIds.includes(card.id))].reduce((sum, card) => sum + card.rank, 0);
+  const topUpBuild = session.builds.find((build) => build.id === topUpBuildId);
+  const topUpTotal = session.ownHand.filter((card) => topUpHandIds.includes(card.id)).reduce((sum, card) => sum + card.rank, 0);
   const clearBuildSelection = () => { setBuildHandIds([]); setBuildFloorIds([]); setBuildMode(false); };
   const players = room.players ?? [];
   const nameForSeat = (seat: number) =>
@@ -103,10 +105,10 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
           ) : topUpBuildId ? (
             <View style={styles.buildPanel}>
               <Text style={styles.buildTotal}>PARTNER BUILD TOP-UP</Text>
-              <Text style={styles.actionHint}>Select cards from your hand that add up exactly to the selected build value. The build owner and value will not change.</Text>
-              <Text style={styles.actionHint}>{topUpHandIds.length} hand card(s) selected</Text>
+              <Text style={styles.actionHint}>Build value: {topUpBuild?.value ?? "Unavailable"} · Your selected total: {topUpTotal}</Text>
+              <Text style={styles.actionHint}>Select one card equal to the build value, or multiple cards that add up exactly to it. Ownership and build value stay unchanged.</Text>
               <View style={styles.actionRow}>
-                <Pressable onPress={() => onTopUp(topUpBuildId, topUpHandIds)} disabled={!myTurn || busy || topUpHandIds.length === 0} style={[styles.actionButton, (!myTurn || busy || topUpHandIds.length === 0) && styles.disabled]}><Text style={styles.actionText}>ADD TO BUILD</Text></Pressable>
+                <Pressable onPress={() => onTopUp(topUpBuildId, topUpHandIds)} disabled={!myTurn || busy || topUpHandIds.length === 0 || !topUpBuild || topUpTotal !== topUpBuild.value} style={[styles.actionButton, (!myTurn || busy || topUpHandIds.length === 0 || !topUpBuild || topUpTotal !== topUpBuild.value) && styles.disabled]}><Text style={styles.actionText}>ADD TO BUILD</Text></Pressable>
                 <Pressable onPress={() => { setTopUpBuildId(null); setTopUpHandIds([]); }} disabled={busy} style={styles.endButton}><Text style={styles.actionText}>CANCEL</Text></Pressable>
               </View>
             </View>
