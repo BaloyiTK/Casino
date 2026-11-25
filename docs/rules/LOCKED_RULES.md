@@ -142,7 +142,7 @@ These are distinct. Team affiliation does not automatically give the partner ind
 ### 4.3 Recover
 
 - If an opposing team captures a team's build, either member of the original team may recover it.
-- **Recovery follows the same card-combination and card-availability rules as creating a build** in Section 4.1. Recovery is not a separate capture action.
+- **Recovery works like creating a build:** the recovering player may form the required build value using a valid combination of cards available under Section 4.1. The player does not need to hold a single card equal to the build value in their hand; they may build that value through a valid combination, just as when creating a build. Recovery is not a separate capture action.
 - If the player recovering the build was its original individual owner, the recovered build remains theirs.
 - If the player recovering the build was not its original individual owner, the recovered build belongs to their partner (the original individual owner), not to the player who performed the recovery.
 - The recovered build retains its original team affiliation.
