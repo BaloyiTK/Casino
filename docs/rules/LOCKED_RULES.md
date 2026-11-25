@@ -56,7 +56,7 @@ This rule applies to the initial deal and every subsequent deal, including Round
 
 The shuffle algorithm for **every shuffle performed in the game is Fisher–Yates**. This applies without exception to each individual suit, the combined 40-card deck, each player's hand, and any other shuffle explicitly required by the game rules. Every random choice in every shuffle must come from a **cryptographically secure random number generator (CSPRNG)**. No other shuffle algorithm or random source may be substituted. This is the required algorithm, not merely a general instruction to shuffle.
 
-### 3.1 Fisher–Yates algorithm
+### 3.2 Fisher–Yates algorithm
 
 For an array containing `n` cards:
 
@@ -68,7 +68,7 @@ For an array containing `n` cards:
 
 Use a CSPRNG-backed API such as Node.js `crypto.randomInt(0, i + 1)` (the upper bound is exclusive). Do not use `Math.random()` or a non-cryptographic/predictable random source.
 
-### 3.2 Required initial 40-card deck shuffle
+### 3.3 Required initial 40-card deck shuffle
 
 Perform these stages in this exact order:
 
@@ -81,20 +81,20 @@ Perform these stages in this exact order:
 
 After combining the four independently shuffled suits, apply Fisher–Yates one more time to the complete 40-card deck, using fresh CSPRNG draws. **Both stages are mandatory: shuffle each suit separately, then shuffle the combined 40-card deck.** Do not combine the suits before their individual shuffles are complete.
 
-### 3.3 Four Hands dealing algorithm
+### 3.4 Four Hands dealing algorithm
 
 1. Player 1 is the first dealer.
 2. Deal two cards to Player 1, then two to Player 2, then two to Player 3, then two to Player 4.
 3. Repeat the same P1 → P2 → P3 → P4 order for five cycles, giving each player 10 cards.
 4. Independently Fisher–Yates-shuffle each player's 10-card hand using CSPRNG draws before play.
 
-### 3.4 Two Hands dealing and Round 2
+### 3.5 Two Hands dealing and Round 2
 
 - For each Two Hands deal, deal two cards to Player 1, then two cards to Player 2, and repeat that order until each player has 10 cards for that deal.
 - Apply the same dealing sequence in both Round 1 and Round 2.
 - Do not perform a new shuffle before Round 2. Continue with the original deck order.
 
-### 3.5 Mandatory shuffle and deal validation
+### 3.6 Mandatory shuffle and deal validation
 
 Before play begins, validate that:
 
