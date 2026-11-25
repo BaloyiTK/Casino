@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Casino",
+    "slug": "casino-card-game",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.baloytk.casino"
+    },
+    "android": {
+      "package": "com.baloytk.casino"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications"
+    ]
+  }
+}
