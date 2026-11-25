@@ -79,7 +79,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor="#102b22" />
+      <StatusBar barStyle="light-content" />
       <View style={styles.screen}>
         <View style={styles.header}>
           <View style={styles.brandRow}>
@@ -203,8 +203,8 @@ const styles = StyleSheet.create({
   turnTag: { color: "#245b43", fontSize: 9, fontWeight: "800", letterSpacing: 1 },
   hand: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: 13, minHeight: 58 },
   card: { width: 39, height: 57, borderRadius: 5, borderWidth: 1, borderColor: "#deded5", backgroundColor: "#fffefa", alignItems: "center", justifyContent: "center", position: "relative", shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 2, elevation: 2 },
-  redCard: { color: "#b93636" },
-  blackCard: { color: "#1b2922" },
+  redCard: { backgroundColor: "#fffefa" },
+  blackCard: { backgroundColor: "#fffefa" },
   cardRank: { position: "absolute", top: 3, left: 5, fontSize: 10, fontWeight: "800", color: "#1b2922" },
   cardSuit: { fontSize: 20, color: "#1b2922" },
   cardBottom: { position: "absolute", bottom: 3, right: 4, fontSize: 8, color: "#1b2922", transform: [{ rotate: "180deg" }] },
