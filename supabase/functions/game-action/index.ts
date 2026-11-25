@@ -56,8 +56,9 @@ function validateBuildIntegrity(state: Record<string, any>, players: PlayerRow[]
     }
     if (!Number.isInteger(build.value) || build.value < 1 || build.value > 10 ||
       !Array.isArray(build.cards) || build.cards.length === 0 ||
-      build.cards.reduce((total, card) => total + card.rank, 0) !== build.value) {
-      throw new Error("Build integrity check failed: build cards must add up to a value from 1 to 10.");
+      build.cards.reduce((total, card) => total + card.rank, 0) < build.value ||
+      build.cards.reduce((total, card) => total + card.rank, 0) % build.value !== 0) {
+      throw new Error("Build integrity check failed: build cards must contain the original value plus zero or more complete value-sized top-ups.");
     }
     if (values.has(build.value)) {
       throw new Error("Build integrity check failed: two active builds cannot have the same value.");
