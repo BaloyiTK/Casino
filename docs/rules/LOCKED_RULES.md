@@ -54,7 +54,9 @@ The player order is the normal player order for the mode:
 
 This rule applies to the initial deal and every subsequent deal, including Round 2 in Two Hands.
 
-The shuffle algorithm for **every shuffle performed in the game is Fisher–Yates**. This applies without exception to each individual suit, the combined 40-card deck, each player's hand, and any other shuffle explicitly required by the game rules. Every random choice in every shuffle must come from a **cryptographically secure random number generator (CSPRNG)**. No other shuffle algorithm or random source may be substituted. This is the required algorithm, not merely a general instruction to shuffle.
+The shuffle algorithm for **every shuffle performed in the game is Fisher–Yates**. This applies to each individual suit, the combined 40-card deck, and any other shuffle explicitly required by the game rules. Every random choice in every shuffle must come from a **cryptographically secure random number generator (CSPRNG)**. No other shuffle algorithm or random source may be substituted. This is the required algorithm, not merely a general instruction to shuffle.
+
+Once the required shuffle of the combined 40-card deck is complete, its resulting card order must be preserved. Deal directly from that deck in its existing order, following the universal player dealing sequence. Do not reshuffle, reorder, sort, or otherwise alter the deck, dealt packets, or any player's hand after the deck shuffle. Each player's hand retains the order in which its cards were received from the deck. In Two Hands, Round 2 continues from the next cards in that same original deck order.
 
 ### 3.2 Fisher–Yates algorithm
 
@@ -86,7 +88,7 @@ After combining the four independently shuffled suits, apply Fisher–Yates one 
 1. Player 1 is the first dealer.
 2. Deal two cards to Player 1, then two to Player 2, then two to Player 3, then two to Player 4.
 3. Repeat the same P1 → P2 → P3 → P4 order for five cycles, giving each player 10 cards.
-4. Independently Fisher–Yates-shuffle each player's 10-card hand using CSPRNG draws before play.
+4. Preserve each player's received card order. Do not shuffle or reorder any player's hand after dealing.
 
 ### 3.5 Two Hands dealing and Round 2
 
