@@ -1,0 +1,155 @@
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, StyleSheet, Text, TextInput, View } from "react-native";
+import { createRoom, getRoom, isSupabaseConfigured, joinRoom, listPublicRooms, watchRoom, type RoomSummary, type RoomVisibility } from "./rooms";
+import type { GameMode } from "./game";
+
+export default function OnlineLobby() {
+  const [mode, setMode] = useState<GameMode>("two");
+  const [visibility, setVisibility] = useState<RoomVisibility>("public");
+  const [displayName, setDisplayName] = useState("Player");
+  const [joinCode, setJoinCode] = useState("");
+  const [room, setRoom] = useState<RoomSummary | null>(null);
+  const [publicRooms, setPublicRooms] = useState<RoomSummary[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function refreshRooms() {
+    try { setPublicRooms(await listPublicRooms()); }
+    catch (e) { setError(e instanceof Error ? e.message : "Could not load public rooms."); }
+  }
+
+  useEffect(() => { if (isSupabaseConfigured) void refreshRooms(); }, []);
+
+  useEffect(() => {
+    if (!room) return;
+    let mounted = true;
+    const refresh = async () => {
+      try { const latest = await getRoom(room.room_id); if (mounted) setRoom(latest); }
+      catch (e) { if (mounted) setError(e instanceof Error ? e.message : "Could not refresh room."); }
+    };
+    const unsubscribe = watchRoom(room.room_id, () => { void refresh(); });
+    return () => { mounted = false; unsubscribe(); };
+  }, [room?.room_id]);
+
+  async function create() {
+    setBusy(true); setError("");
+    try { setRoom(await createRoom(mode, visibility, displayName)); }
+    catch (e) { setError(e instanceof Error ? e.message : "Could not create room."); }
+    finally { setBusy(false); }
+  }
+
+  async function join(code: string) {
+    setBusy(true); setError("");
+    try {
+      const result = await joinRoom(code, displayName);
+      setRoom(await getRoom(result.room_id));
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not join room."); }
+    finally { setBusy(false); }
+  }
+
+  async function share() {
+    if (!room) return;
+    await Share.share({ message: "Join my Casino game. Room code: " + room.room_code });
+  }
+
+  const capacity = mode === "two" ? "2 players" : "4 players";
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.page}>
+        <Text style={styles.kicker}>{room ? "WAITING LOBBY" : "THE TABLE IS YOURS"}</Text>
+        <Text style={styles.hero}>{room ? "Your table is ready." : "Every card has a purpose."}</Text>
+        {room ? (
+          <View style={styles.panel}>
+            <Text style={styles.label}>{room.visibility.toUpperCase()} ROOM · {room.game_mode === "two" ? "TWO HANDS" : "FOUR HANDS"}</Text>
+            <Text style={styles.code}>{room.room_code}</Text>
+            <Pressable onPress={share} style={styles.primary}><Text style={styles.primaryText}>SHARE INVITE</Text></Pressable>
+            <Text style={styles.label}>PLAYERS · {room.occupied_slots}/{room.max_players}</Text>
+            {(room.players ?? []).map(p => (
+              <View key={p.seat} style={styles.playerRow}>
+                <Text style={styles.playerName}>Seat {p.seat} · {p.display_name}</Text>
+                {p.is_host ? <Text style={styles.host}>HOST</Text> : null}
+              </View>
+            ))}
+            {Array.from({ length: Math.max(0, room.max_players - room.occupied_slots) }, (_, i) => (
+              <View key={i} style={styles.openSlot}><Text style={styles.muted}>Seat {room.occupied_slots + i + 1} · Waiting for player</Text></View>
+            ))}
+            <Text style={styles.muted}>Online dealing and gameplay will be enabled after the server-authoritative game engine is connected.</Text>
+            <Pressable onPress={() => { setRoom(null); setError(""); void refreshRooms(); }} style={styles.secondary}><Text style={styles.secondaryText}>BACK TO LOBBY</Text></Pressable>
+          </View>
+        ) : (
+          <>
+            <View style={styles.panel}>
+              <Text style={styles.label}>PLAYER NAME</Text>
+              <TextInput value={displayName} onChangeText={setDisplayName} maxLength={24} placeholder="Enter your name" style={styles.input} />
+              <Text style={styles.label}>CHOOSE GAME</Text>
+              <View style={styles.options}>
+                <Pressable onPress={() => setMode("two")} style={[styles.option, mode === "two" && styles.optionActive]}>
+                  <Text style={styles.optionTitle}>Two Hands</Text><Text style={styles.muted}>1 vs 1 · 2 players</Text>
+                </Pressable>
+                <Pressable onPress={() => setMode("four")} style={[styles.option, mode === "four" && styles.optionActive]}>
+                  <Text style={styles.optionTitle}>Four Hands</Text><Text style={styles.muted}>2 vs 2 · 4 players</Text>
+                </Pressable>
+              </View>
+              <Text style={styles.label}>ROOM VISIBILITY</Text>
+              <View style={styles.options}>
+                <Pressable onPress={() => setVisibility("public")} style={[styles.option, visibility === "public" && styles.optionActive]}><Text style={styles.optionTitle}>Public</Text><Text style={styles.muted}>Visible in the lobby</Text></Pressable>
+                <Pressable onPress={() => setVisibility("private")} style={[styles.option, visibility === "private" && styles.optionActive]}><Text style={styles.optionTitle}>Private</Text><Text style={styles.muted}>Invite by code</Text></Pressable>
+              </View>
+              <Pressable onPress={create} disabled={busy || !displayName.trim() || !isSupabaseConfigured} style={styles.primary}>
+                {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>CREATE {visibility.toUpperCase()} ROOM</Text>}
+              </Pressable>
+              {!isSupabaseConfigured ? <Text style={styles.warning}>Add the Supabase project URL and anon key. See docs/ONLINE_MULTIPLAYER_SETUP.md.</Text> : null}
+            </View>
+            <View style={styles.panel}>
+              <Text style={styles.label}>JOIN WITH ROOM CODE</Text>
+              <TextInput value={joinCode} onChangeText={setJoinCode} autoCapitalize="characters" maxLength={6} placeholder="6-character code" style={styles.input} />
+              <Pressable onPress={() => void join(joinCode)} disabled={busy || joinCode.trim().length !== 6 || !isSupabaseConfigured} style={styles.secondary}><Text style={styles.secondaryText}>JOIN ROOM</Text></Pressable>
+            </View>
+            <View style={styles.panel}>
+              <View style={styles.lobbyHeader}><Text style={styles.label}>PUBLIC TABLES</Text><Pressable onPress={() => void refreshRooms()}><Text style={styles.refresh}>REFRESH ↻</Text></Pressable></View>
+              {publicRooms.length ? publicRooms.map(r => (
+                <View key={r.room_id} style={styles.playerRow}>
+                  <View><Text style={styles.optionTitle}>{r.game_mode === "two" ? "Two Hands" : "Four Hands"}</Text><Text style={styles.muted}>{r.occupied_slots}/{r.max_players} players · {r.room_code}</Text></View>
+                  <Pressable onPress={() => void join(r.room_code)} disabled={busy} style={styles.join}><Text style={styles.primaryText}>JOIN</Text></Pressable>
+                </View>
+              )) : <Text style={styles.muted}>No public tables with open slots right now.</Text>}
+            </View>
+          </>
+        )}
+        {!!error ? <Text style={styles.error}>{error}</Text> : null}
+        <Text style={styles.footer}>40 CARDS · ACE TO 10 · NO FACE CARDS</Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "#f3f2eb" },
+  page: { padding: 22, paddingBottom: 48 },
+  kicker: { color: "#9a8050", fontSize: 10, fontWeight: "800", letterSpacing: 2, marginTop: 24 },
+  hero: { color: "#1b2a22", fontSize: 37, lineHeight: 43, fontWeight: "300", marginTop: 12, marginBottom: 22 },
+  panel: { backgroundColor: "#fbfaf6", borderWidth: 1, borderColor: "#dedfd5", padding: 17, marginBottom: 13 },
+  label: { color: "#8d7955", fontSize: 10, fontWeight: "800", letterSpacing: 1.5, marginBottom: 11, marginTop: 5 },
+  input: { borderWidth: 1, borderColor: "#dedfd5", backgroundColor: "#fffefa", padding: 13, color: "#1b2a22", marginBottom: 15 },
+  options: { flexDirection: "row", gap: 9, marginBottom: 16 },
+  option: { flex: 1, borderWidth: 1, borderColor: "#dedfd5", padding: 12 },
+  optionActive: { borderColor: "#245b43", backgroundColor: "#f0f4ed" },
+  optionTitle: { color: "#1b2a22", fontSize: 12, fontWeight: "800" },
+  muted: { color: "#7c877e", fontSize: 10, marginTop: 5, lineHeight: 15 },
+  primary: { backgroundColor: "#174c39", padding: 16, alignItems: "center", justifyContent: "center", minHeight: 48, marginTop: 5 },
+  primaryText: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 1 },
+  secondary: { backgroundColor: "#e5e4db", padding: 15, alignItems: "center", marginTop: 8 },
+  secondaryText: { color: "#1b2a22", fontSize: 10, fontWeight: "800", letterSpacing: 1 },
+  warning: { color: "#8b6330", fontSize: 10, lineHeight: 15, marginTop: 12 },
+  code: { color: "#174c39", fontSize: 38, fontWeight: "800", letterSpacing: 8, textAlign: "center", paddingVertical: 16 },
+  playerRow: { borderTopWidth: 1, borderColor: "#e5e4db", paddingVertical: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  playerName: { color: "#1b2a22", fontSize: 12, fontWeight: "700" },
+  host: { color: "#9a8050", fontSize: 9, fontWeight: "800" },
+  openSlot: { borderWidth: 1, borderStyle: "dashed", borderColor: "#cbd2c7", padding: 12, marginBottom: 7 },
+  lobbyHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  refresh: { color: "#245b43", fontSize: 9, fontWeight: "800" },
+  join: { backgroundColor: "#174c39", paddingHorizontal: 15, paddingVertical: 10 },
+  error: { color: "#a83232", fontSize: 11, marginVertical: 10 },
+  footer: { color: "#929b91", textAlign: "center", fontSize: 9, letterSpacing: 1.2, marginTop: 15 }
+});
