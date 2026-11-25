@@ -1,2 +1,5 @@
 [functions.game-session]
 verify_jwt = true
+
+[functions.game-action]
+verify_jwt = true
