@@ -149,7 +149,9 @@ Deno.serve(async (request: Request) => {
         : `Turn passed to seat ${state.currentSeat}.`;
     }
 
-    validateCardLedger(state);\n\n    const { data: newVersion, error: commitError } = await admin.rpc("casino_commit_game_action", {
+    validateCardLedger(state);
+
+    const { data: newVersion, error: commitError } = await admin.rpc("casino_commit_game_action", {
       p_game_id: game.id,
       p_actor_user_id: userId,
       p_expected_version: privateRow.version,
