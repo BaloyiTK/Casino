@@ -141,9 +141,12 @@ These are distinct. Team affiliation does not automatically give the partner ind
 - Never count a card both as part of a build and as collected.
 ### 4.3 Recover
 
-- If an opposing team captures a team's build, the original team has a right to recover it under the recovery rule.
-- The exact timing and sequence of recovery have not yet been specified.
-- Do not invent or assume a recovery procedure. Implement only the recovery procedure once it has been fully specified by the game owner.
+- If an opposing team captures a team's build, either member of the original team may recover it.
+- **Recovery follows the same card-combination and card-availability rules as creating a build** in Section 4.1. Recovery is not a separate capture action.
+- If the player recovering the build was its original individual owner, the recovered build remains theirs.
+- If the player recovering the build was not its original individual owner, the recovered build belongs to their partner (the original individual owner), not to the player who performed the recovery.
+- The recovered build retains its original team affiliation.
+- The exact turn/timing when a recovery may be attempted has not yet been specified. Do not invent a timing rule.
 
 A loose card is not automatically a team build: if Player 1 plays a 7 as a loose card onto the floor, Player 3 cannot recover that loose card as a team build. Player 3 may still use that 7 to create a build if they have the necessary cards.
 
