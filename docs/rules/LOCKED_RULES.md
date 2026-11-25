@@ -128,13 +128,13 @@ Building and capturing are different actions.
 - The Shiya exception in this section may temporarily give a player ownership of two active builds during the same turn.
 - Two active builds may not have the same value.
 
-- **Create a build:** A player combines cards genuinely available from their own hand with eligible cards on the floor or in an existing build, as permitted by the build rules. A valid build value cannot exceed 10.
+- **Create a build:** A player combines cards genuinely available from their own hand with eligible loose cards on the floor and, where expressly permitted, eligible visible top cards from opponents' captured-card piles. A valid build value cannot exceed 10. Cards already committed to an active build are not loose or available cards and cannot be reused as the foundation for another build.
 - **Using opponents' captured-pile cards when creating a build:** A player may also use eligible visible top cards from opponents' captured-card piles in the combination that creates a new build, but only if at least one active build already exists on the floor. This condition is satisfied even when that active build was created earlier in the same turn. The player may combine their own card(s) with eligible opponent-pile top card(s) to make the new build value.
 - **Example — creating a build with opponent-pile cards:** If an opponent's captured pile has a 2 on top, another opponent's captured pile has a 4 on top, and the player holds an Ace (1), the player may combine 1 + 2 + 4 = 7 to create a new build valued at 7, provided at least one active build already exists on the floor. A separate loose 5 on the floor is not part of that combination.
-- A player may use one card, two cards, three cards, four cards, or more in a valid combination, if those cards are actually available to that player.
+- A player may use one card, two cards, three cards, four cards, or more in a valid combination, provided every card is genuinely available for that action. Cards committed to an active build cannot be counted again or reused to create another build.
 - **A player cannot create a build with a value that is already represented by a card on the floor.** Check the current floor before creating the build; if a floor card already has that value, the build cannot be created at that value.
 - A player may create and build their own build.
-- A player may assist by adding further valid combinations to their partner's existing build to maintain/top it. These additions belong to the partner's existing build; they do not make the assisting player its individual owner.
+- A player may assist by adding further valid combinations to their partner's existing build to maintain/top it. These additions belong to the partner's existing build; they do not make the assisting player its individual owner. Cards already committed to that build remain committed to it and cannot also be used as the foundation for another build.
 - A top-up to an existing build may be made in either of these ways: (a) one added card individually equals the build value, or (b) two or more added cards combine to equal the build value. For example, a build valued at 8 may be topped up with one 8, or with 3 + 5.
 - A top-up must preserve the existing build value; it must not change that value.
 - A player cannot create, build, or add to an opponent's existing build. Adding cards to another player's build does not transfer or change its individual ownership.
@@ -152,7 +152,7 @@ These are distinct. Team affiliation does not automatically give the partner ind
 
 - **Direct single-card capture:** A player may capture one eligible loose floor card directly, without an existing build, by playing a card of the same value from their hand. Both cards are collected by the capturing player.
 - **Capture a build:** A player may capture a build by making a combination whose total value matches the build value.
-- A capture combination may use any eligible mix of loose cards on the floor and visible top cards from opponents' captured-card piles. The player may combine multiple loose floor cards, multiple eligible opponent-pile top cards, or cards from both locations.
+- A capture combination must include at least one card from the capturing player's own hand. The player may combine that hand card or cards with eligible loose cards on the floor and/or visible top cards from opponents' captured-card piles. Cards already committed to an active build cannot be reused as capture contributions. A player cannot capture using only cards they do not hold or control for that action.
 - **Example — loose floor cards:** If a build is worth 8 and the floor has loose cards 2 and 6, the player may combine 2 + 6 = 8 to capture the build. The player takes the entire build and also collects both the 2 and the 6 used in the combination.
 - **Example — opponents' captured piles:** If the visible top cards of opponents' captured-card piles are 3 and 5, the player may combine 3 + 5 = 8 to capture a build worth 8.
 - **Example — mixed locations:** If an eligible visible top card in an opponent's captured pile is 7 and a loose floor card is 1, the player may combine 7 + 1 = 8 to capture a build worth 8.
@@ -172,7 +172,7 @@ These are distinct. Team affiliation does not automatically give the partner ind
 ### 4.4 Recover
 
 - If an opposing team captures a team's build, either member of the original team may recover it.
-- **Recovery works like creating a build:** the recovering player may form the required build value using a valid combination of cards available under Section 4.1. The player does not need to hold a single card equal to the build value in their hand; they may build that value through a valid combination, just as when creating a build. Recovery is not a separate capture action.
+- **Recovery works like creating a build:** the recovering player may form the required build value using a valid combination of cards available under Section 4.2. The player does not need to hold a single card equal to the build value in their hand; they may build that value through a valid combination, just as when creating a build. Recovery is not a separate capture action.
 - If the player recovering the build was its original individual owner, the recovered build remains theirs.
 - If the player recovering the build was not its original individual owner, the recovered build belongs to their partner (the original individual owner), not to the player who performed the recovery.
 - The recovered build retains its original team affiliation.
@@ -245,7 +245,7 @@ Before accepting a move, validate:
 
 1. The player actually holds every card they intend to play.
 2. Every floor/build card used is present and eligible.
-3. Any combination used to build or capture is valid; a capture combination must use eligible floor cards and visible top cards from opponents' captured-card piles and match the build value.
+3. Any combination used to build or capture is valid; every card must be genuinely available and used only once. A capture combination must include at least one card from the player's hand, may include eligible loose floor cards and visible top cards from opponents' captured-card piles, and must match the build value.
 4. The action respects individual ownership and partnership rules.
 5. No card has already been used, captured, or moved elsewhere.
 
