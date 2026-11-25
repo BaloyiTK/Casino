@@ -80,7 +80,7 @@ Deno.serve(async (request: Request) => {
     const roomId = typeof body.roomId === "string" ? body.roomId : "";
     const action = body.action;
     if (!roomId) throw new Error("A room ID is required.");
-    if (action !== "draft" && action !== "end-turn" && action !== "create-build") throw new Error("Unsupported game action.");
+    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build") throw new Error("Unsupported game action.");
 
     const { data: room, error: roomError } = await admin
       .from("casino_rooms").select("id, game_mode").eq("id", roomId).maybeSingle();
@@ -202,6 +202,36 @@ Deno.serve(async (request: Request) => {
         cards: [...selectedHand, ...selectedFloor, ...selectedOpponentPile]
       });
       state.message = `Seat ${player.seat} created a build worth ${value}.`;
+    } else if (action === "top-up-build") {
+      const buildId = typeof body.buildId === "string" ? body.buildId : "";
+      const handCardIds: string[] = Array.isArray(body.handCardIds)
+        ? body.handCardIds.filter((id: unknown): id is string => typeof id === "string")
+        : [];
+      if (!buildId || handCardIds.length === 0 || new Set(handCardIds).size !== handCardIds.length) {
+        throw new Error("Select a partner build and one or more different cards from your hand.");
+      }
+      if (players.length !== 4) throw new Error("Partner build top-ups are only available in Four Hands.");
+      const builds = state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>;
+      const build = builds.find((item) => item.id === buildId);
+      if (!build) throw new Error("That active build is no longer available.");
+      const playerTeam = player.seat % 2 === 1 ? 1 : 2;
+      if (build.team !== playerTeam || build.ownerSeat === player.seat) {
+        throw new Error("You may only top up your partner's build.");
+      }
+      const selectedCards = handCardIds.map((id) => {
+        const index = ownHand.findIndex((card) => card.id === id);
+        if (index < 0) throw new Error("Every top-up card must be in your own hand.");
+        return ownHand[index];
+      });
+      const addedValue = selectedCards.reduce((total, card) => total + card.rank, 0);
+      if (addedValue !== build.value) {
+        throw new Error(`The selected cards must add up exactly to ${build.value}.`);
+      }
+      for (const id of handCardIds) {
+        ownHand.splice(ownHand.findIndex((card) => card.id === id), 1);
+      }
+      build.cards.push(...selectedCards);
+      state.message = `Seat ${player.seat} topped up their partner's build.`;
     } else {
       const nextSeat = (player.seat % players.length) + 1;
       const allHandsEmpty = Object.values(hands).every((hand) => hand.length === 0);
