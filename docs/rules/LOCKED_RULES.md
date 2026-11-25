@@ -29,6 +29,8 @@ The game has two modes:
 - Two players participate.
 - The mode consists of two rounds.
 - Each player receives 10 cards per round.
+- Do not shuffle again before Round 2. Continue with the original deck order.
+- For the Round 2 deal, deal two cards to Player 1, then two cards to Player 2, and repeat that order until each player has 10 cards.
 
 ### 2.2 Four Hands
 
@@ -40,20 +42,62 @@ The game has two modes:
 - Turn order is Player 1 → Player 2 → Player 3 → Player 4, then repeats.
 - The floor starts empty.
 
-## 3. Four Hands shuffle and deal procedure
+## 3. Shuffle and dealing algorithm
 
-Follow this exact sequence:
+The shuffle algorithm is **Fisher–Yates**, and every random choice must come from a **cryptographically secure random number generator (CSPRNG)**. This is the required algorithm, not merely a general instruction to shuffle.
 
-1. Create the complete 40-card deck (Ace through 10 in each suit).
-2. Independently shuffle the ranks 1–10 within each suit.
-3. After all four suits have been independently shuffled, combine the four shuffled suits into one 40-card deck.
-4. Shuffle the complete 40-card deck.
-5. Player 1 is the first dealer.
-6. Deal two cards to Player 1, then two to Player 2, then two to Player 3, then two to Player 4.
-7. Repeat that player order until each player has 10 cards.
-8. Each player independently shuffles the order of their own 10-card hand before play.
+### 3.1 Fisher–Yates algorithm
 
-Do not change the dealing order or replace this procedure with a different shuffle/deal method.
+For an array containing `n` cards:
+
+1. Set the current index `i` to the last array index (`n - 1`).
+2. Generate a uniformly distributed, cryptographically secure random integer `j` in the inclusive range `0..i`.
+3. Swap the cards at indexes `i` and `j`.
+4. Decrease `i` by one.
+5. Repeat steps 2–4 until `i` reaches 1.
+
+Use a CSPRNG-backed API such as Node.js `crypto.randomInt(0, i + 1)` (the upper bound is exclusive). Do not use `Math.random()` or a non-cryptographic/predictable random source.
+
+### 3.2 Required initial 40-card deck shuffle
+
+Perform these stages in this exact order:
+
+1. Create the complete 40-card deck: Ace through 10 in Spades, Hearts, Diamonds, and Clubs.
+2. Apply a separate, independent Fisher–Yates shuffle using fresh CSPRNG draws to the 10 cards in Spades.
+3. Independently apply Fisher–Yates with fresh CSPRNG draws to the 10 cards in Hearts.
+4. Independently apply Fisher–Yates with fresh CSPRNG draws to the 10 cards in Diamonds.
+5. Independently apply Fisher–Yates with fresh CSPRNG draws to the 10 cards in Clubs.
+6. **After all four suits have each been shuffled, combine the four shuffled suits into one 40-card deck.**
+7. Apply Fisher–Yates again to the complete 40-card deck, using fresh CSPRNG draws.
+
+Do not combine the suits before their individual shuffles are complete. Do not omit the final shuffle of the combined 40-card deck.
+
+### 3.3 Four Hands dealing algorithm
+
+1. Player 1 is the first dealer.
+2. Deal two cards to Player 1, then two to Player 2, then two to Player 3, then two to Player 4.
+3. Repeat the same P1 → P2 → P3 → P4 order for five cycles, giving each player 10 cards.
+4. Independently Fisher–Yates-shuffle each player's 10-card hand using CSPRNG draws before play.
+
+### 3.4 Two Hands dealing and Round 2
+
+- For the Two Hands mode, deal two cards to Player 1, then two to Player 2, repeating until each player has 10 cards for the round.
+- Do not perform a new shuffle before Round 2. Continue with the original deck order and repeat the two-cards-to-Player-1, then two-cards-to-Player-2 dealing sequence until each player has 10 cards for Round 2.
+
+### 3.5 Mandatory shuffle and deal validation
+
+Before play begins, validate that:
+
+- The deck contains exactly 40 cards.
+- Every one of the 40 valid suit/rank combinations appears exactly once.
+- There are exactly 10 cards of each suit.
+- No Jacks, Queens, Kings, duplicate cards, or missing cards exist.
+- In Four Hands, each player has exactly 10 cards after dealing.
+- Each player's hand contains no duplicate physical card.
+
+If any validation fails, discard the invalid deck/deal and restart the complete setup; do not begin play with an invalid deck or hand.
+
+Do not change the algorithms, dealing order, or shuffle stages without explicit approval from the game owner.
 
 ## 4. Builds: creation and use
 
