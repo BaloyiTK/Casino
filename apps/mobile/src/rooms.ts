@@ -120,7 +120,7 @@ export async function getGameSession(
 
 export async function applyGameAction(
   roomId: string,
-  action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose",
+  action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose" | "shiya",
   cardId?: string,
   combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] },
   buildId?: string,
