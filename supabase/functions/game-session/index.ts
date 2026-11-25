@@ -94,6 +94,7 @@ function publicSession(state: Record<string, unknown>, player: PlayerRow, game: 
   const floor = state.floor as Card[];
   return {
     gameId: game.id,
+    version,
     gameMode: game.game_mode,
     round: state.round,
     currentSeat: state.currentSeat,
