@@ -41,6 +41,31 @@ function createShuffledDeck(): Card[] {
   return secureShuffle(shuffledSuits);
 }
 
+function validateDeckAndDeal(deck: Card[], hands: Record<string, Card[]>, playerCount: number) {
+  const suits: Suit[] = ["♠", "♥", "♦", "♣"];
+  const expected = new Set(suits.flatMap((suit) =>
+    Array.from({ length: 10 }, (_, index) => `${suit}-${index + 1}`)
+  ));
+  const dealt = Object.values(hands).flat();
+  const allCards = [...deck, ...dealt];
+  const ids = allCards.map((card) => card.id);
+  if (allCards.length !== 40 || new Set(ids).size !== 40 || ids.some((id) => !expected.has(id))) {
+    throw new Error("Shuffle/deal validation failed: the 40-card deck is incomplete or contains duplicates.");
+  }
+  if (expected.size !== 40 || [...expected].some((id) => !ids.includes(id))) {
+    throw new Error("Shuffle/deal validation failed: a valid suit/rank card is missing.");
+  }
+  if (Object.values(hands).some((hand) => hand.length !== 10)) {
+    throw new Error("Shuffle/deal validation failed: every player must have exactly 10 cards.");
+  }
+  if (playerCount === 2 && deck.length !== 20) {
+    throw new Error("Two Hands validation failed: Round 2 must retain 20 cards.");
+  }
+  if (playerCount === 4 && deck.length !== 0) {
+    throw new Error("Four Hands validation failed: all 40 cards must be dealt.");
+  }
+}
+
 function dealInitialHands(players: PlayerRow[], deck: Card[]) {
   const hands: Record<string, Card[]> = Object.fromEntries(
     players.map((player) => [String(player.seat), []])
@@ -147,14 +172,20 @@ Deno.serve(async (request: Request) => {
       if (players.length !== room.max_players) throw new Error("Wait until every player slot is filled.");
 
       const deck = createShuffledDeck();
-      const hands = dealInitialHands(players as PlayerRow[], deck);
+      const orderedPlayers = players as PlayerRow[];
+      if (orderedPlayers.length !== room.max_players ||
+          orderedPlayers.some((player, index) => player.seat !== index + 1)) {
+        throw new Error("Room seats are incomplete. Wait until every player has joined.");
+      }
+      const hands = dealInitialHands(orderedPlayers, deck);
+      validateDeckAndDeal(deck, hands, orderedPlayers.length);
       const privateState = {
         gameMode: room.game_mode,
         deck,
         hands,
         floor: [],
         builds: [],
-        capturedPiles: Object.fromEntries((players as PlayerRow[]).map((p) => [String(p.seat), []])),
+        capturedPiles: Object.fromEntries(orderedPlayers.map((p) => [String(p.seat), []])),
         round: 1,
         currentSeat: 1,
         roundStarter: 1,
