@@ -102,38 +102,50 @@ If any validation fails, discard the invalid deck/deal and restart the complete 
 
 Do not change the algorithms, dealing order, or shuffle stages without explicit approval from the game owner.
 
-## 4. Builds: creation and use
+## 4. Playing rules
+
+The playing rules are divided into four actions: Build, Capture, Recover, and Partner Assist. These actions are distinct and must follow the card-integrity and ownership rules in this document.
+
+### 4.1 Build
 
 Building and capturing are different actions.
 
 - **Create a build:** A player combines cards genuinely available from their own hand with eligible cards on the floor or in an existing build, as permitted by the build rules.
-- **Capture a build:** A player uses a card or a valid combination from their hand that matches the build value to collect that build.
 - A player may use one card, two cards, three cards, four cards, or more in a valid combination, if those cards are actually available to that player.
 - A player may create or build on their own build, their partner's build, or an opponent's build, subject to the ownership and build rules below.
 - A player may add further combinations onto an existing team build to assist in maintaining/topping that build. These additions belong to the existing build; do not silently treat them as separate independent builds.
-- A player can capture their own build.
-- Every card used in a create, top-up, or capture action must be genuinely held by the player or legitimately available on the table/build. A player cannot use a card they do not have.
+- Every card used in a build or top-up action must be genuinely held by the player or legitimately available on the table/build. A player cannot use a card they do not have.
 
-### Example: creating a build
-
-If Player 1 finds a 2 on the floor and uses a 5 from their hand, Player 1 creates a build of 7.
-
-## 5. Individual ownership and team affiliation
+**Example:** If Player 1 finds a 2 on the floor and uses a 5 from their hand, Player 1 creates a build of 7.
 
 A build has both:
-
 - **An individual owner:** the player who owns the build.
 - **A team affiliation:** the partnership the build belongs to.
 
 These are distinct. Team affiliation does not automatically give the partner individual ownership or the right to capture.
 
-### 5.1 Partner assistance
+### 4.2 Capture
+
+- **Capture a build:** A player uses a card or a valid combination from their hand that matches the build value to collect that build.
+- A player can capture their own build.
+- A capture collects the entire build, including its original cards and all additions made to it.
+- The card or cards used to capture the build are also collected.
+- Captured cards must be removed from the floor/build and recorded in the capturing player's collection.
+- Never count a card both as part of a build and as collected.
+- A player cannot capture a partner's build while the partner remains its individual owner.
+
+### 4.3 Recover
+
+- If an opposing team captures a team's build, the original team has a right to recover it under the recovery rule.
+- The exact timing and sequence of recovery have not yet been specified.
+- Do not invent or assume a recovery procedure. Implement only the recovery procedure once it has been fully specified by the game owner.
+
+A loose card is not automatically a team build: if Player 1 plays a 7 as a loose card onto the floor, Player 3 cannot recover that loose card as a team build. Player 3 may still use that 7 to create a build if they have the necessary cards.
+
+### 4.4 Partner Assist
 
 - A partner may assist with maintaining/topping their teammate's team build if they have the required cards.
 - A partner cannot capture that build while their teammate remains its individual owner.
-
-### 5.2 Request-based ownership pass
-
 - A partner may ask the current individual owner to pass the build to them.
 - The current owner decides whether to grant the request.
 - If the owner grants the pass, individual ownership transfers to the partner.
@@ -141,32 +153,14 @@ These are distinct. Team affiliation does not automatically give the partner ind
 - A partner does not automatically receive ownership.
 - Do not describe ownership transfer as something the partner can initiate unilaterally.
 
-### 5.3 Opponent interaction
-
-- An opponent may capture a build at any time if they have the required card or a valid combination.
-- If an opposing team captures a team's build, the original team has a right to recover it under the recovery rule.
-- Do not invent the exact timing or sequence of recovery; implement only the recovery procedure once it has been fully specified.
-
-### 5.4 Loose card versus team build
-
-If Player 1 plays a 7 as a loose card onto the floor, Player 3 cannot recover that loose card as a team build. Player 3 may still use that 7 to create a build if they have the necessary cards.
-
-## 6. Capturing and collected cards
-
-- A capture collects the entire build, including its original cards and all additions made to it.
-- The card or cards used to capture the build are also collected.
-- Captured cards must be removed from the floor/build and recorded in the capturing player's collection.
-- Never count a card both as part of a build and as collected.
-- Never allow a player to capture a partner's build while the partner remains its individual owner.
-
-## 7. Loose cards at the end of play
+## 5. Loose cards at the end of play
 
 - Loose cards are cards on the floor that are not part of an active build.
 - At the end of play, the **last player to successfully capture** takes the remaining loose cards.
 - This is the last successful capturer, not necessarily the last player who played a card.
 - Loose cards are not team-owned builds.
 
-## 8. Scoring values established so far
+## 6. Scoring values established so far
 
 The following category values have been stated:
 
@@ -189,7 +183,7 @@ The following category values have been stated:
 
 ---
 
-## 9. Mandatory card-integrity rules for every simulation and implementation
+## 7. Mandatory card-integrity rules for every simulation and implementation
 
 Every card must be accounted for in exactly one place:
 
@@ -212,7 +206,7 @@ Before accepting a move, validate:
 
 After every move, reconcile the complete card ledger. If any check fails, stop immediately at that move. Do not continue from an invalid state or conceal the discrepancy.
 
-## 10. Change control
+## 8. Change control
 
 - These are locked rules, not suggestions.
 - Do not infer missing rules from common Casino variants or from another card game.
