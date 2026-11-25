@@ -80,7 +80,7 @@ Deno.serve(async (request: Request) => {
     const roomId = typeof body.roomId === "string" ? body.roomId : "";
     const action = body.action;
     if (!roomId) throw new Error("A room ID is required.");
-    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build") throw new Error("Unsupported game action.");
+    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build") throw new Error("Unsupported game action.");
 
     const { data: room, error: roomError } = await admin
       .from("casino_rooms").select("id, game_mode").eq("id", roomId).maybeSingle();
@@ -202,6 +202,72 @@ Deno.serve(async (request: Request) => {
         cards: [...selectedHand, ...selectedFloor, ...selectedOpponentPile]
       });
       state.message = `Seat ${player.seat} created a build worth ${value}.`;
+    } else if (action === "capture-build") {
+      const buildId = typeof body.buildId === "string" ? body.buildId : "";
+      const handCardIds: string[] = Array.isArray(body.handCardIds)
+        ? body.handCardIds.filter((id: unknown): id is string => typeof id === "string")
+        : [];
+      const floorCardIds: string[] = Array.isArray(body.floorCardIds)
+        ? body.floorCardIds.filter((id: unknown): id is string => typeof id === "string")
+        : [];
+      const opponentPileCardIds: string[] = Array.isArray(body.opponentPileCardIds)
+        ? body.opponentPileCardIds.filter((id: unknown): id is string => typeof id === "string")
+        : [];
+      const selectedIds = [...handCardIds, ...floorCardIds, ...opponentPileCardIds];
+      if (!buildId || handCardIds.length === 0 || selectedIds.length !== new Set(selectedIds).size) {
+        throw new Error("A build capture needs at least one hand card and a unique valid combination.");
+      }
+      const builds = state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>;
+      const buildIndex = builds.findIndex((item) => item.id === buildId);
+      if (buildIndex < 0) throw new Error("That build is no longer active.");
+      const targetBuild = builds[buildIndex];
+      const playerTeam = players.length === 2 ? player.seat : (player.seat % 2 === 1 ? 1 : 2);
+      if (players.length === 4 && targetBuild.ownerSeat !== player.seat && targetBuild.team === playerTeam) {
+        throw new Error("You cannot capture your partner's build while your partner owns it. Use the approved ownership-transfer rule first.");
+      }
+      const floor = state.floor as Card[];
+      const selectedHand = handCardIds.map((id) => {
+        const card = ownHand.find((item) => item.id === id);
+        if (!card) throw new Error("A selected capture card is not in your hand.");
+        return card;
+      });
+      const selectedFloor = floorCardIds.map((id) => {
+        const card = floor.find((item) => item.id === id);
+        if (!card) throw new Error("A selected floor card is not loose or available.");
+        return card;
+      });
+      const capturedPiles = state.capturedPiles as Record<string, Card[]>;
+      const selectedOpponentPile: Card[] = [];
+      for (const id of opponentPileCardIds) {
+        let found: Card | undefined;
+        for (const [seatText, pile] of Object.entries(capturedPiles)) {
+          const pileSeat = Number(seatText);
+          const pileTeam = players.length === 2 ? pileSeat : (pileSeat % 2 === 1 ? 1 : 2);
+          const top = pile[pile.length - 1];
+          if (pileTeam !== playerTeam && top?.id === id) {
+            found = top;
+            break;
+          }
+        }
+        if (!found) throw new Error("Only visible top cards from opponents' captured piles may be used.");
+        selectedOpponentPile.push(found);
+      }
+      const total = [...selectedHand, ...selectedFloor, ...selectedOpponentPile]
+        .reduce((sum, card) => sum + card.rank, 0);
+      if (total !== targetBuild.value) {
+        throw new Error(`The capture combination must total exactly ${targetBuild.value}.`);
+      }
+      for (const id of handCardIds) ownHand.splice(ownHand.findIndex((card) => card.id === id), 1);
+      for (const id of floorCardIds) floor.splice(floor.findIndex((card) => card.id === id), 1);
+      for (const id of opponentPileCardIds) {
+        const pile = Object.values(capturedPiles).find((cards) => cards[cards.length - 1]?.id === id);
+        if (!pile) throw new Error("An opponent pile changed while capturing the build.");
+        pile.pop();
+      }
+      const [capturedBuild] = builds.splice(buildIndex, 1);
+      capturedPiles[String(player.seat)].push(...capturedBuild.cards, ...selectedHand, ...selectedFloor, ...selectedOpponentPile);
+      state.lastCapturerSeat = player.seat;
+      state.message = `Seat ${player.seat} captured build value ${targetBuild.value}.`;
     } else if (action === "top-up-build") {
       const buildId = typeof body.buildId === "string" ? body.buildId : "";
       const handCardIds: string[] = Array.isArray(body.handCardIds)
@@ -286,6 +352,7 @@ Deno.serve(async (request: Request) => {
         .map(([seat, hand]) => ({ seat: Number(seat), handCount: hand.length })),
       floor: latestFloor,
       builds: (state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>).map((build) => ({ id: build.id, value: build.value, ownerSeat: build.ownerSeat, team: build.team, cards: build.cards })),
+      capturedPiles: Object.entries(state.capturedPiles as Record<string, Card[]>).map(([seat, pile]) => ({ seat: Number(seat), count: pile.length, topCard: pile.length ? pile[pile.length - 1] : null })),
       deckCount: latestDeck.length
     };
 
