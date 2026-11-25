@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, StyleSheet, Text, TextInput, View } from "react-native";
-import { createRoom, getRoom, isSupabaseConfigured, joinRoom, listPublicRooms, watchRoom, type RoomSummary, type RoomVisibility } from "./rooms";
+import { createRoom, getGameSession, getRoom, isSupabaseConfigured, joinRoom, listPublicRooms, watchRoom, type OnlineGameSession, type RoomSummary, type RoomVisibility } from "./rooms";\nimport OnlineGame from "./OnlineGame";
 import type { GameMode } from "./game";
 
 export default function OnlineLobby() {
@@ -8,7 +8,7 @@ export default function OnlineLobby() {
   const [visibility, setVisibility] = useState<RoomVisibility>("public");
   const [displayName, setDisplayName] = useState("Player");
   const [joinCode, setJoinCode] = useState("");
-  const [room, setRoom] = useState<RoomSummary | null>(null);
+  const [room, setRoom] = useState<RoomSummary | null>(null);\n  const [gameSession, setGameSession] = useState<OnlineGameSession | null>(null);
   const [publicRooms, setPublicRooms] = useState<RoomSummary[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -24,11 +24,22 @@ export default function OnlineLobby() {
     if (!room) return;
     let mounted = true;
     const refresh = async () => {
-      try { const latest = await getRoom(room.room_id); if (mounted) setRoom(latest); }
-      catch (e) { if (mounted) setError(e instanceof Error ? e.message : "Could not refresh room."); }
+      try {
+        const latest = await getRoom(room.room_id);
+        if (!mounted) return;
+        setRoom(latest);
+        if (latest.status === "playing") {
+          const session = await getGameSession(room.room_id, "get");
+          if (mounted) setGameSession(session);
+        }
+      } catch (e) {
+        if (mounted) setError(e instanceof Error ? e.message : "Could not refresh room.");
+      }
     };
+    void refresh();
+    const refreshInterval = setInterval(() => { void refresh(); }, 5000);
     const unsubscribe = watchRoom(room.room_id, () => { void refresh(); });
-    return () => { mounted = false; unsubscribe(); };
+    return () => { mounted = false; clearInterval(refreshInterval); unsubscribe(); };
   }, [room?.room_id]);
 
   async function create() {
@@ -47,7 +58,7 @@ export default function OnlineLobby() {
     finally { setBusy(false); }
   }
 
-  async function share() {
+  async function startGame() {\n    if (!room) return;\n    setBusy(true); setError("");\n    try {\n      const session = await getGameSession(room.room_id, "start");\n      setGameSession(session);\n      setRoom(await getRoom(room.room_id));\n    } catch (e) { setError(e instanceof Error ? e.message : "Could not start the game."); }\n    finally { setBusy(false); }\n  }\n\n  async function share() {
     if (!room) return;
     await Share.share({ message: "Join my Casino game. Room code: " + room.room_code });
   }
