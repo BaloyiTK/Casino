@@ -80,7 +80,7 @@ Deno.serve(async (request: Request) => {
     const roomId = typeof body.roomId === "string" ? body.roomId : "";
     const action = body.action;
     if (!roomId) throw new Error("A room ID is required.");
-    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build" && action !== "capture-loose") throw new Error("Unsupported game action.");
+    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build" && action !== "capture-loose" && action !== "shiya") throw new Error("Unsupported game action.");
 
     const { data: room, error: roomError } = await admin
       .from("casino_rooms").select("id, game_mode").eq("id", roomId).maybeSingle();
@@ -121,7 +121,14 @@ Deno.serve(async (request: Request) => {
     if (!Array.isArray(ownHand)) throw new Error("Your hand is missing from the game state.");
 
     let nextStatus: "playing" | "round-complete" | "game-complete" = "playing";
-    if (action === "draft") {
+    if (state.shiyaPending && action !== "capture-build") {
+      const pending = state.shiyaPending as { seat: number; team: number; buildIds: string[] };
+      if (pending.seat !== player.seat) throw new Error("Only the player who performed Shiya may complete that turn.");
+      state.phase = "game-complete";
+      state.forfeit = { losingTeam: pending.team, winningTeam: pending.team === 1 ? 2 : 1, pointsAwarded: 11, reason: "Shiya capture requirement not completed." };
+      state.message = `Team ${state.forfeit.winningTeam} wins all 11 points: the Shiya player did not capture one of the two builds.`;
+      nextStatus = "game-complete";
+    } else if (action === "draft") {
       const cardId = typeof body.cardId === "string" ? body.cardId : "";
       const index = ownHand.findIndex((card) => card.id === cardId);
       if (index < 0) throw new Error("That card is not in your hand.");
@@ -202,6 +209,21 @@ Deno.serve(async (request: Request) => {
         cards: [...selectedHand, ...selectedFloor, ...selectedOpponentPile]
       });
       state.message = `Seat ${player.seat} created a build worth ${value}.`;
+    } else if (action === "shiya") {
+      if (players.length !== 4) throw new Error("Shiya is only available in Four Hands.");
+      const buildId = typeof body.buildId === "string" ? body.buildId : "";
+      const builds = state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>;
+      const build = builds.find((item) => item.id === buildId);
+      const playerTeam = player.seat % 2 === 1 ? 1 : 2;
+      if (!build || build.team !== playerTeam || build.ownerSeat === player.seat) throw new Error("Shiya requires an active build individually owned by your partner.");
+      if (state.shiyaPending) throw new Error("A Shiya capture requirement is already active.");
+      const alreadyOwnsBuild = builds.some((item) => item.ownerSeat === player.seat);
+      if (alreadyOwnsBuild && builds.filter((item) => item.ownerSeat === player.seat).length !== 1) throw new Error("You cannot Shiya while already owning two builds.");
+      build.ownerSeat = player.seat;
+      if (alreadyOwnsBuild) {
+        state.shiyaPending = { seat: player.seat, team: playerTeam, buildIds: builds.filter((item) => item.ownerSeat === player.seat).map((item) => item.id) };
+      }
+      state.message = alreadyOwnsBuild ? `Seat ${player.seat} Shiya transferred the partner build. Capture one of your two builds now to finish your turn.` : `Seat ${player.seat} Shiya transferred the partner build.`;
     } else if (action === "capture-build") {
       const buildId = typeof body.buildId === "string" ? body.buildId : "";
       const handCardIds: string[] = Array.isArray(body.handCardIds)
@@ -267,7 +289,15 @@ Deno.serve(async (request: Request) => {
       const [capturedBuild] = builds.splice(buildIndex, 1);
       capturedPiles[String(player.seat)].push(...capturedBuild.cards, ...selectedHand, ...selectedFloor, ...selectedOpponentPile);
       state.lastCapturerSeat = player.seat;
-      state.message = `Seat ${player.seat} captured build value ${targetBuild.value}.`;
+      if (state.shiyaPending) {
+        const pending = state.shiyaPending as { seat: number; team: number; buildIds: string[] };
+        if (pending.seat !== player.seat || !pending.buildIds.includes(buildId)) throw new Error("After Shiya, capture one of the two builds involved in that Shiya turn.");
+        delete state.shiyaPending;
+        state.currentSeat = (player.seat % players.length) + 1;
+        state.message = `Seat ${player.seat} captured a Shiya build. The turn ends immediately.`;
+      } else {
+        state.message = `Seat ${player.seat} captured build value ${targetBuild.value}.`;
+      }
     } else if (action === "capture-loose") {
       const handCardId = typeof body.cardId === "string" ? body.cardId : "";
       const floorCardId = typeof body.targetCardId === "string" ? body.targetCardId : "";
