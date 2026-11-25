@@ -20,6 +20,7 @@ Run all SQL migration files in `supabase/migrations/` in filename order using th
 4. `20261125000400_server_dealt_games.sql`
 5. `20261125000500_room_current_player.sql`
 6. `20261125000600_lock_private_game_state.sql`
+7. `20261125000700_server_game_actions.sql`
 
 Alternatively, install the Supabase CLI, link this repository to your project, and run `supabase db push`.
 
@@ -40,6 +41,7 @@ Deploy the Edge Function from the repository root:
 
 ```bash
 supabase functions deploy game-session
+supabase functions deploy game-action
 ```
 
 The function requires JWT authentication. Supabase supplies its server-side `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` secrets. Never add the service-role key to the mobile app or its `.env` file.
@@ -60,7 +62,10 @@ The function requires JWT authentication. Supabase supplies its server-side `SUP
 - The complete deck order and every hand are stored in a server-only table with no client read policy.
 - The Edge Function returns only the authenticated player's hand; opponent card identities and the remaining deck are not returned.
 - The online screen preserves the dealt hand order and shows opponents' cards face-down.
+- Drafting and ending a turn are submitted to the server. The server checks the active seat and card ownership before changing the state.
+- Game updates use a version check and database row lock to reject stale simultaneous actions.
+- Two Hands Round 2 is dealt automatically from the preserved remaining 20 cards when Round 1 hands are exhausted.
 
 ## Still to implement before a playable match
 
-The server-controlled initial deal and private-hand retrieval are in place, but gameplay actions are not yet enabled. Drafting, building, capturing, Shiya, partner actions, turn validation, Two Hands Round 2 dealing, captured piles, scoring, reconnection, and game recovery still need server-authoritative operations. Do not enable client-side card actions against the server state. Never broadcast a player's hand to other clients or trust client-submitted card state.
+Server-controlled initial dealing, private-hand retrieval, drafting, turn passing, and the Two Hands Round 2 deal are implemented. Build creation, top-ups, captures, Shiya, partner actions, captured piles, scoring, reconnect recovery, and full game completion still need server-authoritative operations. Do not add client-side card state mutations. Never broadcast a player's hand to other clients or trust client-submitted card state.
