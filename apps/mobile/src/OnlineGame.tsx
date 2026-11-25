@@ -56,6 +56,24 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
         ) : <Text style={styles.emptyFloor}>The floor is clear.</Text>}
       </View>
 
+      <View style={styles.buildsPanel}>
+        <View style={styles.tableHeader}>
+          <Text style={styles.buildsHeading}>ACTIVE BUILDS</Text>
+          <Text style={styles.buildsHeading}>{session.builds.length} BUILDS</Text>
+        </View>
+        {session.builds.length ? session.builds.map((build) => (
+          <View key={build.id} style={styles.buildRow}>
+            <View>
+              <Text style={styles.buildValue}>VALUE {build.value}</Text>
+              <Text style={styles.buildOwner}>Owned by {nameForSeat(build.ownerSeat)} · Team {build.team}</Text>
+            </View>
+            <View style={styles.buildCards}>
+              {build.cards.map((card) => <Text key={card.id} style={[styles.buildCard, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>)}
+            </View>
+          </View>
+        )) : <Text style={styles.emptyFloor}>No active builds.</Text>}
+      </View>
+
       <Text style={styles.section}>YOUR HAND · {session.ownHandCount} CARDS</Text>
       <View style={styles.hand}>
         {session.ownHand.map((card, index) => (
@@ -128,6 +146,13 @@ const styles = StyleSheet.create({
   emptyFloor: { color: "#c5d2c8", textAlign: "center", marginTop: 35, fontSize: 12 },
   cardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 16 },
   floorCard: { backgroundColor: "#fffefa", borderRadius: 5, width: 42, height: 58, alignItems: "center", justifyContent: "center" },
+  buildsPanel: { backgroundColor: "#fbfaf6", borderWidth: 1, borderColor: "#dedfd5", padding: 14, marginBottom: 20 },
+  buildsHeading: { color: "#8d7955", fontSize: 9, fontWeight: "800", letterSpacing: 1.2 },
+  buildRow: { borderTopWidth: 1, borderColor: "#e5e4db", paddingVertical: 11, marginTop: 10 },
+  buildValue: { color: "#174c39", fontSize: 15, fontWeight: "800" },
+  buildOwner: { color: "#7c877e", fontSize: 10, marginTop: 3 },
+  buildCards: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 8 },
+  buildCard: { color: "#1b2a22", backgroundColor: "#f0f0e8", paddingHorizontal: 8, paddingVertical: 5, fontSize: 12, fontWeight: "800" },
   section: { color: "#8d7955", fontSize: 10, fontWeight: "800", letterSpacing: 1.5, marginBottom: 11, marginTop: 5 },
   hand: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 },
   ownCard: { backgroundColor: "#fffefa", borderWidth: 1, borderColor: "#d9d9cf", borderRadius: 5, width: 55, height: 78, alignItems: "center", justifyContent: "center" },
