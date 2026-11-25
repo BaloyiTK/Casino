@@ -26,7 +26,9 @@ The game has two modes:
 
 ### 2.1 Two Hands
 
-- Two players participate.
+- Two players participate: Player 1 and Player 2.
+- Player 1 starts Round 1.
+- The player who starts Round 1 also starts Round 2.
 - The mode consists of two rounds.
 - Each player receives 10 cards per round.
 - Round 2 uses the same universal dealing and deck-order rules in Section 3.
@@ -88,8 +90,8 @@ After combining the four independently shuffled suits, apply Fisher–Yates one 
 
 ### 3.4 Mode-specific dealing notes
 
-- Four Hands: Player 1 is the first dealer. The universal dealing rule in Section 3.1 gives each of the four players 10 cards over five cycles.
-- Two Hands: both rounds use the universal dealing rule in Section 3.1. Round 2 does not involve a new shuffle; continue from the next cards in the preserved original deck order.
+- Four Hands: Player 1 is the first dealer and first player. The universal dealing rule in Section 3.1 gives each of the four players 10 cards over five cycles.
+- Two Hands: Player 1 starts Round 1. The same player who started Round 1 starts Round 2. Both rounds use the universal dealing rule in Section 3.1. Round 2 does not involve a new shuffle; continue from the next cards in the preserved original deck order.
 
 ### 3.5 Mandatory shuffle and deal validation
 
@@ -204,7 +206,7 @@ The following category values have been stated:
 | Scoring category | Points |
 |---|---:|
 | Four Aces | 4 |
-| Big 10 | 1 |
+| Big 10 (dice-related category) | 1 |
 | 6 of Spades (6♠) | 1 |
 | Most cards collected | 2 |
 | Spy 2 (2♠) | 1 |
@@ -217,7 +219,12 @@ The following category values have been stated:
 - If both teams have exactly 20, they share the 2 points: 1 point each.
 - This is one combined 20+ scoring category; do not score “More than 21” and “Exactly 20” as two separate categories.
 
+### Team scoring in Four Hands
+
+- Each partner's scoring points are added together to produce their partnership's team score.
+
 **Scoring total:** With the combined 20+ category, the listed categories total 11 points: 4 + 1 + 1 + 2 + 1 + 2 = 11. The exact calculation method used to determine a team's 20+ total has not yet been specified; do not invent it.
+- The exact dice procedure or condition for awarding the Big 10 point has not yet been specified in this file; do not invent it.
 
 ---
 
