@@ -162,24 +162,17 @@ Deno.serve(async (request: Request) => {
     });
     if (commitError) throw commitError;
 
-    const { data: latestState, error: latestError } = await admin
-      .from("casino_game_private_state")
-      .select("state")
-      .eq("game_id", game.id)
-      .single();
-    if (latestError) throw latestError;
-
     const currentPlayer = players.find((item) => item.user_id === userId)!;
-    const latestHands = latestState.state.hands as Record<string, Card[]>;
-    const latestDeck = latestState.state.deck as Card[];
-    const latestFloor = latestState.state.floor as Card[];
+    const latestHands = state.hands as Record<string, Card[]>;
+    const latestDeck = state.deck as Card[];
+    const latestFloor = state.floor as Card[];
     const response = {
       gameId: game.id,
       version: newVersion,
       gameMode: game.game_mode,
-      round: latestState.state.round,
-      currentSeat: latestState.state.currentSeat,
-      phase: latestState.state.phase,
+      round: state.round,
+      currentSeat: state.currentSeat,
+      phase: state.phase,
       ownSeat: currentPlayer.seat,
       ownHand: latestHands[String(currentPlayer.seat)] ?? [],
       ownHandCount: (latestHands[String(currentPlayer.seat)] ?? []).length,
