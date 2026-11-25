@@ -1,0 +1,41 @@
+name: Casino checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - "supabase/**"
+      - ".github/workflows/casino-checks.yml"
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - "supabase/**"
+      - ".github/workflows/casino-checks.yml"
+
+jobs:
+  mobile-typecheck:
+    name: Mobile TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install mobile dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: apps/mobile
+      - name: Typecheck mobile app
+        run: npm run typecheck
+        working-directory: apps/mobile
+
+  edge-function-check:
+    name: Supabase Edge Functions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Typecheck Edge Functions
+        run: deno check supabase/functions/game-session/index.ts supabase/functions/game-action/index.ts
