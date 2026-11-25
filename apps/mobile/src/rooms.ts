@@ -85,6 +85,7 @@ export async function getRoom(roomId: string): Promise<RoomSummary> {
 
 export interface OnlineGameSession {
   gameId: string;
+  version: number;
   gameMode: RoomMode;
   round: number;
   currentSeat: number;
@@ -104,6 +105,24 @@ export async function getGameSession(
   await requireSupabaseSession();
   const { data, error } = await client().functions.invoke("game-session", {
     body: { roomId, action }
+  });
+  if (error) {
+    const details = data && typeof data === "object" && "error" in data
+      ? String((data as { error: unknown }).error)
+      : error.message;
+    throw new Error(details);
+  }
+  return data as OnlineGameSession;
+}
+
+export async function applyGameAction(
+  roomId: string,
+  action: "draft" | "end-turn",
+  cardId?: string
+): Promise<OnlineGameSession> {
+  await requireSupabaseSession();
+  const { data, error } = await client().functions.invoke("game-action", {
+    body: { roomId, action, cardId }
   });
   if (error) {
     const details = data && typeof data === "object" && "error" in data
