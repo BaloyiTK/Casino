@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, StyleSheet, Text, TextInput, View } from "react-native";
-import { createRoom, getGameSession, getRoom, isSupabaseConfigured, joinRoom, listPublicRooms, watchRoom, type OnlineGameSession, type RoomSummary, type RoomVisibility } from "./rooms";\nimport OnlineGame from "./OnlineGame";
+import { createRoom, getGameSession, getRoom, isSupabaseConfigured, joinRoom, listPublicRooms, watchRoom, type OnlineGameSession, type RoomSummary, type RoomVisibility } from "./rooms";
+import OnlineGame from "./OnlineGame";
 import type { GameMode } from "./game";
 
 export default function OnlineLobby() {
@@ -8,7 +9,8 @@ export default function OnlineLobby() {
   const [visibility, setVisibility] = useState<RoomVisibility>("public");
   const [displayName, setDisplayName] = useState("Player");
   const [joinCode, setJoinCode] = useState("");
-  const [room, setRoom] = useState<RoomSummary | null>(null);\n  const [gameSession, setGameSession] = useState<OnlineGameSession | null>(null);
+  const [room, setRoom] = useState<RoomSummary | null>(null);
+  const [gameSession, setGameSession] = useState<OnlineGameSession | null>(null);
   const [publicRooms, setPublicRooms] = useState<RoomSummary[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -18,7 +20,12 @@ export default function OnlineLobby() {
     catch (e) { setError(e instanceof Error ? e.message : "Could not load public rooms."); }
   }
 
-  useEffect(() => {\n    if (!isSupabaseConfigured) return;\n    void refreshRooms();\n    const refreshInterval = setInterval(() => { void refreshRooms(); }, 8000);\n    return () => clearInterval(refreshInterval);\n  }, []);
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    void refreshRooms();
+    const refreshInterval = setInterval(() => { void refreshRooms(); }, 8000);
+    return () => clearInterval(refreshInterval);
+  }, []);
 
   useEffect(() => {
     if (!room) return;
@@ -58,7 +65,18 @@ export default function OnlineLobby() {
     finally { setBusy(false); }
   }
 
-  async function startGame() {\n    if (!room) return;\n    setBusy(true); setError("");\n    try {\n      const session = await getGameSession(room.room_id, "start");\n      setGameSession(session);\n      setRoom(await getRoom(room.room_id));\n    } catch (e) { setError(e instanceof Error ? e.message : "Could not start the game."); }\n    finally { setBusy(false); }\n  }\n\n  async function share() {
+  async function startGame() {
+    if (!room) return;
+    setBusy(true); setError("");
+    try {
+      const session = await getGameSession(room.room_id, "start");
+      setGameSession(session);
+      setRoom(await getRoom(room.room_id));
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not start the game."); }
+    finally { setBusy(false); }
+  }
+
+  async function share() {
     if (!room) return;
     await Share.share({ message: "Join my Casino game. Room code: " + room.room_code });
   }
