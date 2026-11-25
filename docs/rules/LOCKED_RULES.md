@@ -44,7 +44,7 @@ The game has two modes:
 
 ## 3. Shuffle and dealing algorithm
 
-The shuffle algorithm is **Fisher–Yates**, and every random choice must come from a **cryptographically secure random number generator (CSPRNG)**. This is the required algorithm, not merely a general instruction to shuffle.
+The shuffle algorithm for **every shuffle performed in the game is Fisher–Yates**. This applies without exception to each individual suit, the combined 40-card deck, each player's hand, and any other shuffle explicitly required by the game rules. Every random choice in every shuffle must come from a **cryptographically secure random number generator (CSPRNG)**. No other shuffle algorithm or random source may be substituted. This is the required algorithm, not merely a general instruction to shuffle.
 
 ### 3.1 Fisher–Yates algorithm
 
