@@ -214,7 +214,7 @@ Deno.serve(async (request: Request) => {
 
     const { data: privateRow, error: privateError } = await admin
       .from("casino_game_private_state")
-      .select("state")
+      .select("state, version")
       .eq("game_id", game.id)
       .single();
     if (privateError) throw privateError;
