@@ -1,3 +1,4 @@
+/// <reference lib="deno.ns" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type Suit = "♠" | "♥" | "♦" | "♣";
@@ -128,9 +129,9 @@ Deno.serve(async (request: Request) => {
       (state.floor as Card[]).push(card);
       state.message = `Seat ${player.seat} drafted a card.`;
     } else if (action === "create-build") {
-      const handCardIds = Array.isArray(body.handCardIds) ? body.handCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
-      const floorCardIds = Array.isArray(body.floorCardIds) ? body.floorCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
-      const opponentPileCardIds = Array.isArray(body.opponentPileCardIds) ? body.opponentPileCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
+      const handCardIds: string[] = Array.isArray(body.handCardIds) ? body.handCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
+      const floorCardIds: string[] = Array.isArray(body.floorCardIds) ? body.floorCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
+      const opponentPileCardIds: string[] = Array.isArray(body.opponentPileCardIds) ? body.opponentPileCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
       const allSelectedIds = [...handCardIds, ...floorCardIds, ...opponentPileCardIds];
       if (allSelectedIds.length === 0 || new Set(allSelectedIds).size !== allSelectedIds.length) {
         throw new Error("Select a valid combination of different cards.");
