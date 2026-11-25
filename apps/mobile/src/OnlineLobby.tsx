@@ -18,7 +18,7 @@ export default function OnlineLobby() {
     catch (e) { setError(e instanceof Error ? e.message : "Could not load public rooms."); }
   }
 
-  useEffect(() => { if (isSupabaseConfigured) void refreshRooms(); }, []);
+  useEffect(() => {\n    if (!isSupabaseConfigured) return;\n    void refreshRooms();\n    const refreshInterval = setInterval(() => { void refreshRooms(); }, 8000);\n    return () => clearInterval(refreshInterval);\n  }, []);
 
   useEffect(() => {
     if (!room) return;
