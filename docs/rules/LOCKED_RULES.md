@@ -122,8 +122,8 @@ The playing rules include Drafting, Build, Capture, Recover, and Partner Assist.
 Building and capturing are different actions.
 
 - A build's value cannot exceed 10.
-- A player may own no more than one active build at a time.
-- A player cannot create a second build while they already own an active build.
+- Normally, a player may own no more than one active build at a time.
+- The Shiya exception in this section may temporarily give a player ownership of two active builds during the same turn.
 - Two active builds may not have the same value.
 
 - **Create a build:** A player combines cards genuinely available from their own hand with eligible cards on the floor or in an existing build, as permitted by the build rules. A valid build value cannot exceed 10.
@@ -133,7 +133,8 @@ Building and capturing are different actions.
 - **A player cannot create a build with a value that is already represented by a card on the floor.** Check the current floor before creating the build; if a floor card already has that value, the build cannot be created at that value.
 - A player may create and build their own build.
 - A player may assist by adding further valid combinations to their partner's existing build to maintain/top it. These additions belong to the partner's existing build; they do not make the assisting player its individual owner.
-- Any addition to an existing build must match that build's existing value. An addition must not change the build's value.
+- A top-up to an existing build may be made in either of these ways: (a) one added card individually equals the build value, or (b) two or more added cards combine to equal the build value. For example, a build valued at 8 may be topped up with one 8, or with 3 + 5.
+- A top-up must preserve the existing build value; it must not change that value.
 - A player cannot create, build, or add to an opponent's existing build. Adding cards to another player's build does not transfer or change its individual ownership.
 - Every card used in a build or top-up action must be genuinely held by the player or legitimately available on the table/build. A player cannot use a card they do not have.
 
@@ -154,7 +155,12 @@ These are distinct. Team affiliation does not automatically give the partner ind
 - **Example — opponents' captured piles:** If the visible top cards of opponents' captured-card piles are 3 and 5, the player may combine 3 + 5 = 8 to capture a build worth 8.
 - **Example — mixed locations:** If an eligible visible top card in an opponent's captured pile is 7 and a loose floor card is 1, the player may combine 7 + 1 = 8 to capture a build worth 8.
 - A player may capture their own build or an opponent's build, provided they can make the required matching combination using eligible cards.
-- A player cannot capture their partner's build while the partner remains its individual owner.
+- A player cannot directly capture their partner's build while the partner remains its individual owner.
+- **Shiya:** A player may Shiya their partner's build. Shiya immediately transfers individual ownership of that build to the player performing Shiya; no additional card contribution is required for the transfer. Once ownership has transferred, that player may capture the build.
+- A player may Shiya their partner's build even if they already own an active build. This may temporarily leave them owning two active builds.
+- If a player owns two builds because of Shiya, they must capture at least one of those builds during that same turn. If they capture one, their turn ends immediately; the other build remains active under their ownership. They are not required to capture both builds.
+- If, instead of capturing at least one of those two builds, the player plays something else, the game ends immediately and the opposing team is awarded all 11 points.
+- Shiya is an ownership transfer, not a capture by itself. Do not require a card contribution to perform Shiya.
 - A capture collects the entire build, including its original cards and all additions made to it.
 - All cards used in the capture combination are collected as part of the capture.
 - Cards used from the floor or opponents' captured-card piles must be removed from their previous locations and recorded in the capturing player's collection.
@@ -181,7 +187,8 @@ A loose card is not automatically a team build: if Player 1 plays a 7 as a loose
 - If the owner grants the pass, individual ownership transfers to the partner.
 - The new owner may then capture the build, provided they can make the required matching combination using eligible cards.
 - A partner does not automatically receive ownership.
-- Do not describe ownership transfer as something the partner can initiate unilaterally.
+- Shiya is the separately confirmed exception: it transfers ownership immediately as described in Section 4.2 and does not require the current owner to grant a request.
+- Do not describe an ordinary ownership transfer by request as something the partner can initiate unilaterally.
 
 ## 5. Loose cards at the end of play
 
@@ -201,15 +208,16 @@ The following category values have been stated:
 | 6 of Spades (6♠) | 1 |
 | Most cards collected | 2 |
 | Spy 2 (2♠) | 1 |
-| More than 21 (21+) | 2 |
-| Exactly 20 | 2 |
+| 20+ category (including exactly 20) | 2 |
 
-### Exactly 20 tie
+### 20+ category and tie
 
-- Exactly 20 is worth 2 points in total.
-- If two players tie at exactly 20, they share those 2 points: 1 point each.
+- The 20+ category is worth 2 points in total.
+- If one team qualifies for the 20+ category, that team receives all 2 points.
+- If both teams have exactly 20, they share the 2 points: 1 point each.
+- This is one combined 20+ scoring category; do not score “More than 21” and “Exactly 20” as two separate categories.
 
-**Scoring integrity note:** The game owner has stated that the overall scoring pool is 11 points. The category values listed above add to 13 points. Do not silently change any category value or the stated total. The discrepancy and any remaining scoring definitions must be resolved by the game owner before final scoring logic is treated as complete.
+**Scoring total:** With the combined 20+ category, the listed categories total 11 points: 4 + 1 + 1 + 2 + 1 + 2 = 11. The exact calculation method used to determine a team's 20+ total has not yet been specified; do not invent it.
 
 ---
 
