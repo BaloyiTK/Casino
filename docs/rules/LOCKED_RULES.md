@@ -127,7 +127,11 @@ These are distinct. Team affiliation does not automatically give the partner ind
 
 ### 4.2 Capture
 
-- **Capture a build:** A player may capture a build by combining cards from the floor and the visible top cards of opponents' captured-card piles. The combination must match the build value.
+- **Capture a build:** A player may capture a build by making a combination whose total value matches the build value.
+- A capture combination may use any eligible mix of loose cards on the floor and visible top cards from opponents' captured-card piles. The player may combine multiple loose floor cards, multiple eligible opponent-pile top cards, or cards from both locations.
+- **Example — loose floor cards:** If a build is worth 8 and the floor has loose cards 2 and 6, the player may combine 2 + 6 = 8 to capture the build. The player takes the entire build and also collects both the 2 and the 6 used in the combination.
+- **Example — opponents' captured piles:** If the visible top cards of opponents' captured-card piles are 3 and 5, the player may combine 3 + 5 = 8 to capture a build worth 8.
+- **Example — mixed locations:** If an eligible visible top card in an opponent's captured pile is 7 and a loose floor card is 1, the player may combine 7 + 1 = 8 to capture a build worth 8.
 - A player may capture their own build or an opponent's build, provided they can make the required matching combination using eligible cards.
 - A player cannot capture their partner's build while the partner remains its individual owner.
 - A capture collects the entire build, including its original cards and all additions made to it.
