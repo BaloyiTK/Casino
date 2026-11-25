@@ -13,13 +13,16 @@ type Props = {
   onCaptureBuild: (buildId: string, selection: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }) => void;
   onCaptureLoose: (handCardId: string, floorCardId: string) => void;
   onShiya: (buildId: string) => void;
+  onRequestTransfer: (buildId: string) => void;
+  onApproveTransfer: (buildId: string) => void;
+  onRejectTransfer: (buildId: string) => void;
 };
 
 function cardLabel(card: { rank: number; suit: string }) {
   return `${card.rank === 1 ? "A" : card.rank}${card.suit}`;
 }
 
-export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose, onShiya }: Props) {
+export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose, onShiya, onRequestTransfer, onApproveTransfer, onRejectTransfer }: Props) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [buildMode, setBuildMode] = useState(false);
   const [buildHandIds, setBuildHandIds] = useState<string[]>([]);
@@ -82,6 +85,24 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
               <Text style={styles.buildValue}>VALUE {build.value}</Text>
               <Text style={styles.buildOwner}>Owned by {nameForSeat(build.ownerSeat)} · Team {build.team}</Text>
               {session.gameMode === "four" && build.ownerSeat !== session.ownSeat && build.team === (session.ownSeat % 2 === 1 ? 1 : 2) ? <Pressable disabled={!myTurn || busy} onPress={() => { setBuildMode(false); setTopUpBuildId(build.id); setTopUpHandIds([]); setSelectedCardId(null); }} style={styles.topUpButton}><Text style={styles.topUpButtonText}>TOP UP PARTNER BUILD</Text></Pressable> : null}
+              {session.gameMode === "four" && build.ownerSeat !== session.ownSeat && build.team === (session.ownSeat % 2 === 1 ? 1 : 2) ? (() => {
+                const request = session.ownershipRequests.find((item) => item.buildId === build.id && item.status === "pending");
+                const previous = session.ownershipRequests.find((item) => item.buildId === build.id && item.requesterSeat === session.ownSeat && item.status !== "pending");
+                return request
+                  ? <Text style={styles.actionHint}>{request.requesterSeat === session.ownSeat ? "Ownership request sent · waiting for partner" : "Your partner has requested this build"}</Text>
+                  : previous ? <Text style={styles.actionHint}>Last request {previous.status}</Text>
+                  : <Pressable disabled={busy} onPress={() => onRequestTransfer(build.id)} style={styles.topUpButton}><Text style={styles.topUpButtonText}>REQUEST OWNERSHIP</Text></Pressable>;
+              })() : null}
+              {session.gameMode === "four" && build.ownerSeat === session.ownSeat ? (() => {
+                const request = session.ownershipRequests.find((item) => item.buildId === build.id && item.ownerSeat === session.ownSeat && item.status === "pending");
+                return request ? <View>
+                  <Text style={styles.actionHint}>Seat {request.requesterSeat} requests ownership of this build.</Text>
+                  <View style={styles.actionRow}>
+                    <Pressable disabled={busy} onPress={() => onApproveTransfer(build.id)} style={styles.actionButton}><Text style={styles.actionText}>APPROVE</Text></Pressable>
+                    <Pressable disabled={busy} onPress={() => onRejectTransfer(build.id)} style={styles.endButton}><Text style={styles.actionText}>DECLINE</Text></Pressable>
+                  </View>
+                </View> : null;
+              })() : null}
             {session.gameMode === "four" && build.ownerSeat !== session.ownSeat && build.team === (session.ownSeat % 2 === 1 ? 1 : 2) ? <Pressable disabled={!myTurn || busy} onPress={() => onShiya(build.id)} style={styles.topUpButton}><Text style={styles.topUpButtonText}>SHIYA · TAKE OWNERSHIP</Text></Pressable> : null}
             </View>
             {!(session.gameMode === "four" && build.ownerSeat !== session.ownSeat && build.team === (session.ownSeat % 2 === 1 ? 1 : 2)) ? <Pressable disabled={!myTurn || busy} onPress={() => { setBuildMode(false); setTopUpBuildId(null); setCaptureBuildId(build.id); setCaptureHandIds([]); setCaptureFloorIds([]); setCapturePileIds([]); setSelectedCardId(null); }} style={styles.topUpButton}><Text style={styles.topUpButtonText}>CAPTURE BUILD</Text></Pressable> : null}
