@@ -62,10 +62,11 @@ The function requires JWT authentication. Supabase supplies its server-side `SUP
 - The complete deck order and every hand are stored in a server-only table with no client read policy.
 - The Edge Function returns only the authenticated player's hand; opponent card identities and the remaining deck are not returned.
 - The online screen preserves the dealt hand order and shows opponents' cards face-down.
+- Players can enter build-selection mode, select cards from their own hand and loose floor cards, preview the total, and submit a build. The server validates the combination and returns the public active builds; each player's hand remains private.
 - Drafting, build creation, and ending a turn are submitted to the server. The server checks the active seat, card ownership, selected card locations, build value, duplicate build values, existing ownership limits, and the opponent-pile eligibility rule before changing the state.
 - Game updates use a version check and database row lock to reject stale simultaneous actions.
 - Two Hands Round 2 is dealt automatically from the preserved remaining 20 cards when Round 1 hands are exhausted.
 
 ## Still to implement before a playable match
 
-Server-controlled initial dealing, private-hand retrieval, drafting, turn passing, the Two Hands Round 2 deal, and the first server-validated build-creation operation are implemented. The mobile table does not yet expose a build-creation selector. Build top-ups, captures, Shiya, partner actions, captured-pile gameplay, scoring, reconnect recovery, and full game completion still need implementation. Do not add client-side card state mutations. Never broadcast a player's hand to other clients or trust client-submitted card state.
+Server-controlled initial dealing, private-hand retrieval, drafting, turn passing, the Two Hands Round 2 deal, the first server-validated build-creation operation, a mobile hand/floor combination selector, and public active-build display are implemented. Build top-ups, captures, Shiya, partner actions, captured-pile gameplay, scoring, reconnect recovery, and full game completion still need implementation. Do not add client-side card state mutations. Never broadcast a player's hand to other clients or trust client-submitted card state.
