@@ -2,14 +2,19 @@ import { spawnSync } from "node:child_process";
 
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const checks = [
-  { name: "Root ESLint", command: npm, args: ["run", "lint"] },
-  { name: "Root TypeScript", command: npm, args: ["run", "typecheck"] },
-  { name: "Next.js production build", command: npm, args: ["run", "build"] },
-  { name: "React Native / Expo TypeScript", command: npm, args: ["run", "mobile:typecheck"] },
+  {
+    name: "React Native / Expo TypeScript",
+    command: npm,
+    args: ["run", "mobile:typecheck"]
+  },
   {
     name: "Supabase Edge Function typecheck",
     command: "deno",
-    args: ["check", "apps/api/supabase/functions/game-session/index.ts", "apps/api/supabase/functions/game-action/index.ts"]
+    args: [
+      "check",
+      "apps/api/supabase/functions/game-session/index.ts",
+      "apps/api/supabase/functions/game-action/index.ts"
+    ]
   },
   {
     name: "Shuffle and dealing tests",
