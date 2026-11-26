@@ -173,11 +173,11 @@ These are distinct. Team affiliation does not automatically give the partner ind
 
 - If an opposing team captures a team's build, either member of the original team may recover it.
 - **Recovery timing:** Recovery may be attempted during either member of the original team's turn.
-- **Recovery works like creating a build:** the recovering player may form the required build value using a valid combination of cards available under Section 4.2. The player does not need to hold a single card equal to the build value in their hand; they may build that value through a valid combination, just as when creating a build. Recovery is not a separate capture action.
-- If the player recovering the build was its original individual owner, the recovered build remains theirs.
-- If the player recovering the build was not its original individual owner, the recovered build belongs to their partner (the original individual owner), not to the player who performed the recovery.
+- **Recovery works like creating a new build:** the recovering player forms a new build of the captured build's value using a valid combination of eligible cards under Section 4.2. The player does not need a single matching card in hand; they may use a valid combination.
+- **Captured cards stay captured:** recovery does not return, remove, or transfer any cards from the opponent's captured pile. The original captured build remains in that pile. Only the cards used for the recovery combination form the new active build.
+- **Ownership:** the player who creates the new build through recovery becomes its individual owner. It does not automatically belong to the original owner of the captured build.
 - **Original-owner draft restriction:** If the original individual owner drafts a loose floor card whose value matches the captured build's value, their partner can no longer recover that captured build. The restriction is based on card value, not suit or physical card identity. The original owner may still recover it, and the partner may still create a separate new build of that value using a valid combination.
-- The recovered build retains its original team affiliation.
+- The new recovery build belongs to the recovering player's team.
 
 A loose card is not automatically a team build: if Player 1 plays a 7 as a loose card onto the floor, Player 3 cannot recover that loose card as a team build. Player 3 may still use that 7 to create a build if they have the necessary cards.
 
