@@ -151,6 +151,14 @@ Deno.serve(async (request: Request) => {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   } catch (error) {
+    if (!Deno.env.get("DENO_DEPLOYMENT_ID")) {
+      console.error("[Casino dev] game-session request failed", {
+        timestamp: new Date().toISOString(),
+        name: error instanceof Error ? error.name : "UnknownError",
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+    }
     const message = error instanceof Error ? error.message : "Could not load the game session.";
     return new Response(JSON.stringify({ error: message }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
