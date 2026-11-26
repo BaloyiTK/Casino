@@ -21,6 +21,7 @@ Run all SQL migration files in `supabase/migrations/` in filename order using th
 5. `20261125000500_room_current_player.sql`
 6. `20261125000600_lock_private_game_state.sql`
 7. `20261125000700_server_game_actions.sql`
+8. `20261125000800_partner_transfer_actions.sql`
 
 Alternatively, install the Supabase CLI, link this repository to your project, and run `supabase db push`.
 
@@ -46,27 +47,27 @@ supabase functions deploy game-action
 
 The function requires JWT authentication. Supabase supplies its server-side `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` secrets. Never add the service-role key to the mobile app or its `.env` file.
 
-## Implemented room and dealing foundation
+## Implemented functionality
 
-- Create a Two Hands (2-player) or Four Hands (4-player) room.
-- Choose public or private visibility.
-- Private rooms are joined by sharing the room code; they are not listed publicly.
-- Public rooms appear in the lobby with their occupied/open slots.
-- Players can join public rooms from the lobby or join either room type using its code.
-- Database functions lock the room while joining, assign the next free seat, and prevent overfilling.
-- Room membership is checked server-side; room rosters are visible only to members.
-- Realtime room and roster changes refresh the waiting lobby.
-- The host can start a full room; the server creates the deck using cryptographically secure Fisher–Yates shuffles, first per suit and then across the combined deck.
-- The server deals two consecutive cards to each player in seat order, repeating five times.
-- Four Hands receives 10 cards each from the full 40-card deck. Two Hands receives 10 each and keeps the remaining 20 cards in the same deck order for Round 2.
-- The complete deck order and every hand are stored in a server-only table with no client read policy.
-- The Edge Function returns only the authenticated player's hand; opponent card identities and the remaining deck are not returned.
-- The online screen preserves the dealt hand order and shows opponents' cards face-down.
-- Players can enter build-selection mode, select cards from their own hand and loose floor cards, preview the total, and submit a build. The server validates the combination and returns the public active builds; each player's hand remains private.
-- Drafting, build creation, and ending a turn are submitted to the server. The server checks the active seat, card ownership, selected card locations, build value, duplicate build values, existing ownership limits, and the opponent-pile eligibility rule before changing the state.
-- Game updates use a version check and database row lock to reject stale simultaneous actions.
-- Two Hands Round 2 is dealt automatically from the preserved remaining 20 cards when Round 1 hands are exhausted.
+- Public and private rooms for Two Hands (2 players) and Four Hands (4 players), with room codes and server-side seat assignment.
+- Server-side cryptographically secure deck generation: shuffle each suit independently, combine in suit order, then shuffle the complete 40-card deck.
+- Two-card-at-a-time dealing in player order. Two Hands Round 2 continues from the preserved remaining deck without reshuffling.
+- Private server-side game state. Each player receives only their own hand; opponents' card identities and the remaining deck stay private.
+- Drafting loose cards onto the floor.
+- Server-validated build creation using the player's hand, loose floor cards, and eligible visible top cards from opposing captured piles.
+- Partner build top-ups, build capture, direct loose-card capture, and captured-pile top-card visibility.
+- Shiya ownership transfer and its forced-capture/forfeit handling.
+- Partner build ownership requests with approve/decline actions.
+- Turn passing and Two Hands Round 2 dealing.
+- Last successful capturer receives remaining loose floor cards when play ends.
+- Card-ledger and active-build invariant validation, with automated Deno tests.
+- Version checks and database row locks protect game-state mutations against stale concurrent actions.
 
-## Still to implement before a playable match
+## Still outstanding before a complete playable match
 
-Server-controlled initial dealing, private-hand retrieval, drafting, turn passing, the Two Hands Round 2 deal, the first server-validated build-creation operation, a mobile hand/floor combination selector, and public active-build display are implemented. Build top-ups, captures, Shiya, partner actions, captured-pile gameplay, scoring, reconnect recovery, and full game completion still need implementation. Do not add client-side card state mutations. Never broadcast a player's hand to other clients or trust client-submitted card state.
+- Recovery is not implemented because the exact turn/timing when recovery may be attempted is explicitly unspecified in `docs/rules/LOCKED_RULES.md`. The confirmed ownership and combination rules are documented there; no timing has been invented.
+- Final scoring is not implemented. The calculation for the combined 20+ category and the Big 10 dice procedure/condition remain unspecified.
+- A complete Four Hands match-end/scoring flow still needs to be added after the round-complete state.
+- Supabase project configuration, migration application, Edge Function deployment, and real-device multiplayer testing have not yet been completed or verified.
+
+Do not add client-side card-state mutations. Never broadcast a player's hand to other clients or trust client-submitted card state.
