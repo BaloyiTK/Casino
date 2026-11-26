@@ -79,7 +79,11 @@ export function watchRoom(roomId: string, onChange: () => void) {
       table: "casino_room_players",
       filter: `room_id=eq.${roomId}`
     }, onChange)
-    .subscribe();
+    .subscribe((status, error) => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        logDevError("room.realtime-subscription", error ?? new Error(status), { roomId, status });
+      }
+    });
 
   return () => {
     void client().removeChannel(channel);
