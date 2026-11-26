@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint app lib",
     "typecheck": "tsc --noEmit",
     "mobile": "npm --prefix apps/mobile start",
     "mobile:android": "npm --prefix apps/mobile run android",
