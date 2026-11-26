@@ -1,8 +1,7 @@
 /// <reference lib="deno.ns" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createValidatedInitialDeal, type Card } from "../_shared/shuffle-deal.ts";
 
-type Suit = "♠" | "♥" | "♦" | "♣";
-type Card = { id: string; suit: Suit; rank: number };
 type PlayerRow = { user_id: string; display_name: string; seat: number };
 
 const corsHeaders = {
@@ -10,84 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
-
-function secureRandomUint32(): number {
-  const values = new Uint32Array(1);
-  crypto.getRandomValues(values);
-  return values[0];
-}
-
-function secureShuffle<T>(items: T[]): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const range = i + 1;
-    const limit = Math.floor(0x100000000 / range) * range;
-    let value = secureRandomUint32();
-    while (value >= limit) value = secureRandomUint32();
-    const j = value % range;
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
-function createShuffledDeck(): Card[] {
-  const suits: Suit[] = ["♠", "♥", "♦", "♣"];
-  const shuffledSuits = suits.flatMap((suit) =>
-    secureShuffle(Array.from({ length: 10 }, (_, index) => ({
-      id: `${suit}-${index + 1}`,
-      suit,
-      rank: index + 1
-    })))
-  );
-  return secureShuffle(shuffledSuits);
-}
-
-function validateDeckAndDeal(deck: Card[], hands: Record<string, Card[]>, playerCount: number) {
-  const suits: Suit[] = ["♠", "♥", "♦", "♣"];
-  const expected = new Set(suits.flatMap((suit) =>
-    Array.from({ length: 10 }, (_, index) => `${suit}-${index + 1}`)
-  ));
-  const dealt = Object.values(hands).flat();
-  const allCards = [...deck, ...dealt];
-  const ids = allCards.map((card) => card.id);
-  if (allCards.length !== 40 || new Set(ids).size !== 40 || ids.some((id) => !expected.has(id))) {
-    throw new Error("Shuffle/deal validation failed: the 40-card deck is incomplete or contains duplicates.");
-  }
-  if (expected.size !== 40 || [...expected].some((id) => !ids.includes(id))) {
-    throw new Error("Shuffle/deal validation failed: a valid suit/rank card is missing.");
-  }
-  if (Object.values(hands).some((hand) => hand.length !== 10)) {
-    throw new Error("Shuffle/deal validation failed: every player must have exactly 10 cards.");
-  }
-  if (playerCount === 2 && deck.length !== 20) {
-    throw new Error("Two Hands validation failed: Round 2 must retain 20 cards.");
-  }
-  if (playerCount === 4 && deck.length !== 0) {
-    throw new Error("Four Hands validation failed: all 40 cards must be dealt.");
-  }
-}
-
-function dealInitialHands(players: PlayerRow[], deck: Card[]) {
-  const hands: Record<string, Card[]> = Object.fromEntries(
-    players.map((player) => [String(player.seat), []])
-  );
-  for (let cycle = 0; cycle < 5; cycle++) {
-    for (const player of players) {
-      for (let count = 0; count < 2; count++) {
-        const card = deck.shift();
-        if (!card) throw new Error("The deck ran out during dealing.");
-        hands[String(player.seat)].push(card);
-      }
-    }
-  }
-  if (Object.values(hands).some((hand) => hand.length !== 10)) {
-    throw new Error("Initial deal validation failed: every player must receive 10 cards.");
-  }
-  if (new Set(Object.values(hands).flat().map((card) => card.id)).size !== players.length * 10) {
-    throw new Error("Initial deal validation failed: duplicate cards were dealt.");
-  }
-  return hands;
-}
 
 function publicSession(state: Record<string, unknown>, player: PlayerRow, game: Record<string, unknown>, version: number) {
   const hands = state.hands as Record<string, Card[]>;
@@ -178,14 +99,12 @@ Deno.serve(async (request: Request) => {
       if (room.status !== "waiting") throw new Error("This room is not waiting to start.");
       if (roomPlayers.length !== room.max_players) throw new Error("Wait until every player slot is filled.");
 
-      const deck = createShuffledDeck();
       const orderedPlayers = roomPlayers;
       if (orderedPlayers.length !== room.max_players ||
           orderedPlayers.some((player, index) => player.seat !== index + 1)) {
         throw new Error("Room seats are incomplete. Wait until every player has joined.");
       }
-      const hands = dealInitialHands(orderedPlayers, deck);
-      validateDeckAndDeal(deck, hands, orderedPlayers.length);
+      const { deck, hands } = createValidatedInitialDeal(orderedPlayers, orderedPlayers.length);
       const privateState = {
         gameMode: room.game_mode,
         deck,
