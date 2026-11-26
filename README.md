@@ -40,15 +40,11 @@ Install and run the Supabase CLI, then use:
 ```bash
 npm run api:start
 npm run api:stop
+npm run api:functions:serve
+npm run api:db:push
 ```
 
-Serve the Edge Functions locally:
-
-```bash
-npm run api:start
-cd apps/api
-supabase functions serve
-```
+`npm run api:functions:serve` serves the Edge Functions locally. Use `npm run api:db:push` to apply migrations to a linked project, or `npm run api:db:reset` to reset the local database.
 
 Database migrations and Edge Functions are kept together under `apps/api/supabase/`. Supabase project configuration is therefore run from `apps/api`.
 
