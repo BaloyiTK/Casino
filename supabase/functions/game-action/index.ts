@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { awardRemainingFloorCards, validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow } from "../_shared/game-invariants.ts";
+import { awardRemainingFloorCards, blockPartnerRecoveryForDraft, canRecoverCapturedBuild, validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow, type RecoverableBuild } from "../_shared/game-invariants.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -141,12 +141,8 @@ Deno.serve(async (request: Request) => {
       if (index < 0) throw new Error("That card is not in your hand.");
       const [card] = ownHand.splice(index, 1);
       (state.floor as Card[]).push(card);
-      const recoverableBuilds = (state.recoverableBuilds ?? []) as Array<{ originalOwnerSeat: number; value: number; status: string; partnerRecoveryBlocked: boolean }>;
-      for (const capturedBuild of recoverableBuilds) {
-        if (capturedBuild.status === "captured" && capturedBuild.originalOwnerSeat === player.seat && capturedBuild.value === card.rank) {
-          capturedBuild.partnerRecoveryBlocked = true;
-        }
-      }
+      const recoverableBuilds = (state.recoverableBuilds ?? []) as RecoverableBuild[];
+      blockPartnerRecoveryForDraft(recoverableBuilds, player.seat, card.rank);
       state.recoverableBuilds = recoverableBuilds;
       state.message = `Seat ${player.seat} drafted a card.`;
     } else if (action === "create-build") {
@@ -232,12 +228,12 @@ Deno.serve(async (request: Request) => {
       if (!capturedBuildId || handCardIds.length === 0 || selectedIds.length !== new Set(selectedIds).size) {
         throw new Error("Recovery needs a captured build and a unique combination containing at least one card from your hand.");
       }
-      const recoverableBuilds = (state.recoverableBuilds ?? []) as Array<{ id: string; value: number; originalOwnerSeat: number; originalTeam: number; status: string; partnerRecoveryBlocked: boolean }>;
+      const recoverableBuilds = (state.recoverableBuilds ?? []) as RecoverableBuild[];
       const capturedBuild = recoverableBuilds.find((item) => item.id === capturedBuildId && item.status === "captured");
       if (!capturedBuild) throw new Error("That captured build is no longer available to recover.");
       const playerTeam = players.length === 2 ? player.seat : (player.seat % 2 === 1 ? 1 : 2);
-      if (capturedBuild.originalTeam !== playerTeam) throw new Error("Only a member of the original team may recover this build.");
-      if (capturedBuild.originalOwnerSeat !== player.seat && capturedBuild.partnerRecoveryBlocked) {
+      if (!canRecoverCapturedBuild(capturedBuild, player.seat, playerTeam)) {
+        if (capturedBuild.originalTeam !== playerTeam) throw new Error("Only a member of the original team may recover this build.");
         throw new Error("The original owner drafted a card of this value. Their partner can no longer recover this captured build.");
       }
       const builds = state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>;
