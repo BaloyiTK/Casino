@@ -6,13 +6,13 @@ A custom South African Casino card game.
 
 - **`apps/mobile`:** One cross-platform React Native + Expo application for Android and iOS.
 - **`apps/api`:** Supabase backend, including Edge Functions and database migrations.
-- **Root `app/` and `lib/`:** Existing Next.js web prototype, retained for now.
+- **`docs/rules/LOCKED_RULES.md`:** Source of truth for confirmed game rules.
 
-The mobile application is a single codebase. Android and iOS are build targets of that same application; they are not separate projects.
+Android and iOS are build targets of the same mobile application, not separate projects. There is no separate web application.
 
 ## Install dependencies
 
-Run this once from the repository root. npm workspaces install the root web app and both application workspaces together.
+Run once from the repository root:
 
 ```bash
 npm install
@@ -33,9 +33,9 @@ npm run mobile:ios
 
 ## Run the backend
 
-The backend uses Supabase (Postgres, Realtime, and Edge Functions). It is not a second Node/Express server.
+The backend uses Supabase (Postgres, Realtime, and Edge Functions), not a separate Node/Express server.
 
-Install and run the Supabase CLI, then use:
+Install the Supabase CLI, then run from the repository root:
 
 ```bash
 npm run api:start
@@ -44,23 +44,20 @@ npm run api:functions:serve
 npm run api:db:push
 ```
 
-`npm run api:functions:serve` serves the Edge Functions locally. Use `npm run api:db:push` to apply migrations to a linked project, or `npm run api:db:reset` to reset the local database.
+Use `npm run api:db:reset` to reset the local database. Database migrations and Edge Functions live under `apps/api/supabase/`.
 
-Database migrations and Edge Functions are kept together under `apps/api/supabase/`. Supabase project configuration is therefore run from `apps/api`.
-
-## Run all checks
+## Run checks
 
 ```bash
 npm test
 ```
 
-The test runner checks root ESLint, root TypeScript, the Next.js production build, Expo/React Native TypeScript, Supabase Edge Function types, card/build invariants, recovery rules, and gameplay regression tests.
+The test runner checks the Expo/React Native TypeScript project, Supabase Edge Function types, shuffle and dealing, game invariants, recovery rules, and gameplay regression tests.
 
-These are automated code-level checks. A live multiplayer playtest still requires a configured Supabase project and multiple signed-in devices.
+These are automated code-level checks. A live multiplayer playtest still requires a configured Supabase project and multiple devices.
 
 ## Development principles
 
 - `docs/rules/LOCKED_RULES.md` is the source of truth for confirmed game rules.
 - The game engine must enforce the 40-card integrity ledger.
 - Unspecified rules must remain unimplemented until clarified.
-- The existing Next.js prototype is retained while the cross-platform mobile app is developed.
