@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow } from "../_shared/game-invariants.ts";
+import { awardRemainingFloorCards, validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow } from "../_shared/game-invariants.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -361,13 +361,17 @@ Deno.serve(async (request: Request) => {
       if (allHandsEmpty && game.game_mode === "two" && state.round === 1) {
         dealNextTwoHandsRound(players, state);
       } else if (allHandsEmpty && game.game_mode === "two" && state.round === 2) {
+        const awarded = awardRemainingFloorCards(state);
         state.phase = "game-complete";
         state.currentSeat = nextSeat;
         nextStatus = "game-complete";
+        if (awarded > 0) state.message = `The last successful capturer (seat ${state.lastCapturerSeat}) receives the ${awarded} remaining loose floor card(s).`;
       } else if (allHandsEmpty && game.game_mode === "four") {
+        const awarded = awardRemainingFloorCards(state);
         state.phase = "round-complete";
         state.currentSeat = nextSeat;
         nextStatus = "round-complete";
+        if (awarded > 0) state.message = `The last successful capturer (seat ${state.lastCapturerSeat}) receives the ${awarded} remaining loose floor card(s).`
       } else {
         state.currentSeat = nextSeat;
       }
