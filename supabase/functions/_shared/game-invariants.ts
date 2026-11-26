@@ -4,6 +4,40 @@ export type PlayerRow = { user_id: string; display_name: string; seat: number };
 
 type GameState = Record<string, any>;
 
+export type RecoverableBuild = {
+  id: string;
+  value: number;
+  originalOwnerSeat: number;
+  originalTeam: number;
+  capturedBySeat: number;
+  status: "captured" | "recovered";
+  partnerRecoveryBlocked: boolean;
+  recoveredBySeat?: number;
+};
+
+export function blockPartnerRecoveryForDraft(
+  recoverableBuilds: RecoverableBuild[],
+  ownerSeat: number,
+  draftedValue: number
+): void {
+  for (const build of recoverableBuilds) {
+    if (build.status === "captured" &&
+      build.originalOwnerSeat === ownerSeat &&
+      build.value === draftedValue) {
+      build.partnerRecoveryBlocked = true;
+    }
+  }
+}
+
+export function canRecoverCapturedBuild(
+  build: RecoverableBuild,
+  playerSeat: number,
+  playerTeam: number
+): boolean {
+  if (build.status !== "captured" || build.originalTeam !== playerTeam) return false;
+  return build.originalOwnerSeat === playerSeat || !build.partnerRecoveryBlocked;
+}
+
 export function validateCardLedger(state: GameState): void {
   const suits: Suit[] = ["♠", "♥", "♦", "♣"];
   const expected = new Map<string, { suit: Suit; rank: number }>(suits.flatMap((suit) =>
