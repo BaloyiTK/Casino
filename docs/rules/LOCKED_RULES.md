@@ -178,6 +178,7 @@ These are distinct. Team affiliation does not automatically give the partner ind
 - **Ownership:** the player who creates the new build through recovery becomes its individual owner. It does not automatically belong to the original owner of the captured build.
 - **Original-owner draft restriction:** If the original individual owner drafts a loose floor card whose value matches the captured build's value, their partner can no longer recover that captured build. The restriction is based on card value, not suit or physical card identity. The original owner may still recover it, and the partner may still create a separate new build of that value using a valid combination.
 - The new recovery build belongs to the recovering player's team.
+- A captured build may be recovered more than once. If the recovered build is later captured again by the opposing team, the original team may attempt recovery again, subject to all recovery and normal build-creation rules above.
 
 A loose card is not automatically a team build: if Player 1 plays a 7 as a loose card onto the floor, Player 3 cannot recover that loose card as a team build. Player 3 may still use that 7 to create a build if they have the necessary cards.
 
