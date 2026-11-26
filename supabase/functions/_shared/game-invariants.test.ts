@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
-import { assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow } from "./game-invariants.ts";
+import { assertEquals, assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { awardRemainingFloorCards, validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow } from "./game-invariants.ts";
 
 const suits = ["♠", "♥", "♦", "♣"] as const;
 const allCards: Card[] = suits.flatMap((suit) =>
@@ -96,4 +96,17 @@ Deno.test("build integrity rejects two owned builds without Shiya", () => {
     { id: "b2", value: 8, ownerSeat: 1, team: 1, cards: [{ ...allCards[1], rank: 8 }] }
   ] };
   assertThrows(() => validateBuildIntegrity(state, fourPlayers), Error, "two builds");
+});
+
+
+Deno.test("end-of-game award gives remaining loose floor cards to the last successful capturer", () => {
+  const state = ledgerState();
+  state.deck = state.deck.slice(0, 38);
+  state.floor = [allCards[38], allCards[39]];
+  state.lastCapturerSeat = 2;
+  const awarded = awardRemainingFloorCards(state);
+  assertEquals(awarded, 2);
+  assertEquals(state.floor.length, 0);
+  assertEquals(state.capturedPiles["2"].map((card: Card) => card.id), [allCards[38].id, allCards[39].id]);
+  validateCardLedger(state);
 });
