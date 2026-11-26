@@ -64,7 +64,7 @@ export default function OnlineLobby() {
         const restoredRoom = await getRoom(roomId);
         if (!mounted) return;
         setRoom(restoredRoom);
-        if (restoredRoom.status === "playing") {
+        if (restoredRoom.status === "playing" || restoredRoom.status === "completed") {
           const restoredSession = await getGameSession(roomId, "get");
           if (mounted) setGameSession(restoredSession);
         }
@@ -84,7 +84,7 @@ export default function OnlineLobby() {
         const latest = await getRoom(room.room_id);
         if (!mounted) return;
         setRoom(latest);
-        if (latest.status === "playing") {
+        if (latest.status === "playing" || latest.status === "completed") {
           const session = await getGameSession(room.room_id, "get");
           if (mounted) setGameSession(session);
         }
