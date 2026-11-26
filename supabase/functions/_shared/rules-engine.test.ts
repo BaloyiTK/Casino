@@ -16,15 +16,20 @@ import {
 import { validateCardLedger } from "./game-invariants.ts";
 
 const suits = ["♠", "♥", "♦", "♣"] as const;
-const deck: Card[] = suits.flatMap((suit) =>
+type MobileCard = {
+  id: string;
+  suit: Card["suit"];
+  rank: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+};
+const deck: MobileCard[] = suits.flatMap((suit) =>
   Array.from({ length: 10 }, (_, index) => ({
     id: `${suit}-${index + 1}`,
     suit,
-    rank: index + 1
+    rank: (index + 1) as MobileCard["rank"]
   }))
 );
-const card = (rank: number, suit: Card["suit"] = "♠"): Card => ({
-  id: `${suit}-${rank}`, suit, rank
+const card = (rank: number, suit: Card["suit"] = "♠"): MobileCard => ({
+  id: `${suit}-${rank}`, suit, rank: rank as MobileCard["rank"]
 });
 const players = [
   { id: 1, teamId: 0, hand: [card(4), card(3, "♥"), card(8, "♦")] },
