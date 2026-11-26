@@ -188,7 +188,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
       <View style={styles.hand}>
         {session.ownHand.map((card, index) => (
           <Pressable key={card.id} onPress={() => buildMode ? setBuildHandIds((ids) => toggleId(ids, card.id)) : topUpBuildId ? setTopUpHandIds((ids) => toggleId(ids, card.id)) : captureBuildId ? setCaptureHandIds((ids) => toggleId(ids, card.id)) : recoverBuildId ? setRecoverHandIds((ids) => toggleId(ids, card.id)) : setSelectedCardId(card.id)} disabled={!myTurn || busy} style={[styles.ownCard, (buildMode ? buildHandIds.includes(card.id) : topUpBuildId ? topUpHandIds.includes(card.id) : captureBuildId ? captureHandIds.includes(card.id) : recoverBuildId ? recoverHandIds.includes(card.id) : selectedCardId === card.id) && styles.selectedCard]}>
-            <PlayingCardFace rank={card.rank} suit={card.suit} compact />
+            <PlayingCardFace rank={card.rank} suit={card.suit} />
             <Text style={styles.cardIndex}>{buildMode ? buildHandIds.includes(card.id) ? "BUILD" : index + 1 : topUpBuildId ? topUpHandIds.includes(card.id) ? "TOP UP" : index + 1 : captureBuildId ? captureHandIds.includes(card.id) ? "CAPTURE" : index + 1 : recoverBuildId ? recoverHandIds.includes(card.id) ? "RECOVER" : index + 1 : index + 1}</Text>
           </Pressable>
         ))}
