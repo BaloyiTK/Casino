@@ -22,6 +22,42 @@ function client() {
   return supabase;
 }
 
+async function functionErrorDetails(error: unknown, scope: string, context: { roomId: string; action: string }): Promise<string> {
+  const functionError = error as { message?: unknown; name?: unknown; context?: unknown; code?: unknown };
+  const response = functionError?.context;
+  let status: number | undefined;
+  let responseBody = "";
+
+  if (response instanceof Response) {
+    status = response.status;
+    try {
+      const raw = await response.clone().text();
+      responseBody = raw.slice(0, 8000);
+    } catch (readError) {
+      responseBody = "Could not read Edge Function response: " + String(readError);
+    }
+  }
+
+  logDevError(scope, error, {
+    ...context,
+    httpStatus: status,
+    errorCode: typeof functionError?.code === "string" ? functionError.code : undefined,
+    responseBody
+  });
+
+  if (responseBody) {
+    try {
+      const parsed = JSON.parse(responseBody) as { error?: unknown; message?: unknown };
+      if (typeof parsed.error === "string") return parsed.error;
+      if (typeof parsed.message === "string") return parsed.message;
+    } catch {
+      // Keep the raw response in the development log; use the SDK message below.
+    }
+  }
+
+  return typeof functionError?.message === "string" ? functionError.message : String(error);
+}
+
 export async function createRoom(
   mode: RoomMode,
   visibility: RoomVisibility,
@@ -131,10 +167,7 @@ export async function getGameSession(
     body: { roomId, action }
   });
   if (error) {
-    logDevError("game-session.invoke", error, { roomId, action });
-    const details = data && typeof data === "object" && "error" in data
-      ? String((data as { error: unknown }).error)
-      : error.message;
+    const details = await functionErrorDetails(error, "game-session.invoke", { roomId, action });
     throw new Error(details);
   }
   return data as OnlineGameSession;
@@ -154,10 +187,7 @@ export async function applyGameAction(
     body: { roomId, action, cardId, buildId, targetCardId, capturedBuildId, ...(combination ?? {}) }
   });
   if (error) {
-    logDevError("game-action.invoke", error, { roomId, action });
-    const details = data && typeof data === "object" && "error" in data
-      ? String((data as { error: unknown }).error)
-      : error.message;
+    const details = await functionErrorDetails(error, "game-action.invoke", { roomId, action });
     throw new Error(details);
   }
   return data as OnlineGameSession;
