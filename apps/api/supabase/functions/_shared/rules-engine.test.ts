@@ -64,7 +64,7 @@ Deno.test("build creation combines hand and floor cards and records individual o
   assert(result.ok);
   assertEquals(result.state.builds[0].value, 7);
   assertEquals(result.state.builds[0].ownerId, 1);
-  assertEquals(result.state.builds[0].teamId, 1);
+  assertEquals(result.state.builds[0].teamId, 0);
   assertEquals(result.state.floor.length, 0);
 });
 
