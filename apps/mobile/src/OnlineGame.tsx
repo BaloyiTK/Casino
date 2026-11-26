@@ -43,30 +43,59 @@ function pipPositions(rank: number): Pip[] {
   }
 }
 
+function SuitIcon({ suit, size, color }: { suit: string; size: number; color: string }) {
+  const unit = size * 0.42;
+  const common = { position: "absolute" as const, backgroundColor: color };
+  if (suit === "D") {
+    return <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}><View style={{ width: unit, height: unit, backgroundColor: color, transform: [{ rotate: "45deg" }] }} /></View>;
+  }
+  if (suit === "H" || suit === "S") {
+    const inverted = suit === "S";
+    return (
+      <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center", transform: [{ rotate: inverted ? "180deg" : "0deg" }] }}>
+        <View style={{ ...common, width: unit * 0.78, height: unit * 0.78, left: size * 0.18, top: size * 0.16, borderRadius: unit, transform: [{ rotate: "45deg" }] }} />
+        <View style={{ ...common, width: unit * 0.68, height: unit * 0.68, left: size * 0.12, top: size * 0.13, borderRadius: unit }} />
+        <View style={{ ...common, width: unit * 0.68, height: unit * 0.68, right: size * 0.12, top: size * 0.13, borderRadius: unit }} />
+        {inverted ? <View style={{ ...common, width: size * 0.13, height: size * 0.22, bottom: 0, left: size * 0.435 }} /> : null}
+      </View>
+    );
+  }
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <View style={{ ...common, width: unit * 0.72, height: unit * 0.72, left: size * 0.12, top: size * 0.18, borderRadius: unit }} />
+      <View style={{ ...common, width: unit * 0.72, height: unit * 0.72, right: size * 0.12, top: size * 0.18, borderRadius: unit }} />
+      <View style={{ ...common, width: unit * 0.72, height: unit * 0.72, left: size * 0.32, top: size * 0.02, borderRadius: unit }} />
+      <View style={{ ...common, width: size * 0.14, height: size * 0.35, bottom: 0, left: size * 0.43 }} />
+    </View>
+  );
+}
+
 function PlayingCardFace({ rank, suit, compact = false }: { rank: number; suit: string; compact?: boolean }) {
-  const symbol = suit === "H" || suit === "hearts" ? "♥" : suit === "D" || suit === "diamonds" ? "♦" : suit === "S" || suit === "spades" ? "♠" : suit === "C" || suit === "clubs" ? "♣" : suit;
-  const redSuit = symbol === "♥" || symbol === "♦";
+  const normalizedSuit = suit === "H" || suit === "hearts" ? "H" : suit === "D" || suit === "diamonds" ? "D" : suit === "S" || suit === "spades" ? "S" : "C";
+  const redSuit = normalizedSuit === "H" || normalizedSuit === "D";
+  const color = redSuit ? "#b43b3b" : "#171b19";
   const value = rank === 1 ? "A" : String(rank);
   const pips = pipPositions(rank);
+  const pipSize = compact ? 11 : 17;
   return (
     <View style={[styles.cardFaceInner, compact && styles.cardFaceCompact]}>
       <View style={styles.cardCorner}>
         <Text style={[styles.cardCornerRank, redSuit && styles.red]}>{value}</Text>
-        <Text style={[styles.cardCornerSuit, redSuit && styles.red]}>{symbol}</Text>
+        <SuitIcon suit={normalizedSuit} size={compact ? 8 : 10} color={color} />
       </View>
       <View pointerEvents="none" style={styles.cardPips}>
         {pips.map((pip, index) => (
-          <Text key={index} style={[
+          <View key={index} style={[
             styles.cardPip,
-            compact && styles.cardPipCompact,
-            redSuit && styles.red,
-            { left: `${pip.x}%`, top: `${pip.y}%`, transform: [{ rotate: pip.inverted ? "180deg" : "0deg" }] },
-          ]}>{symbol}</Text>
+            { left: `${pip.x}%`, top: `${pip.y}%`, width: pipSize, height: pipSize, marginLeft: -pipSize / 2, marginTop: -pipSize / 2, transform: [{ rotate: pip.inverted ? "180deg" : "0deg" }] },
+          ]}>
+            <SuitIcon suit={normalizedSuit} size={pipSize} color={color} />
+          </View>
         ))}
       </View>
       <View style={[styles.cardCorner, styles.cardCornerBottom]}>
         <Text style={[styles.cardCornerRank, redSuit && styles.red]}>{value}</Text>
-        <Text style={[styles.cardCornerSuit, redSuit && styles.red]}>{symbol}</Text>
+        <SuitIcon suit={normalizedSuit} size={compact ? 8 : 10} color={color} />
       </View>
     </View>
   );
@@ -338,9 +367,7 @@ const styles = StyleSheet.create({
   cardCornerRank: { color: "#1b2a22", fontSize: 11, lineHeight: 12, fontWeight: "900" },
   cardCornerSuit: { color: "#1b2a22", fontSize: 9, lineHeight: 10, fontWeight: "800" },
   cardPips: { ...StyleSheet.absoluteFillObject },
-  cardPip: { position: "absolute", width: 18, height: 20, marginLeft: -9, marginTop: -10, textAlign: "center", textAlignVertical: "center", fontSize: 16, lineHeight: 19, fontWeight: "700" },
-  cardPipCompact: { width: 14, height: 15, marginLeft: -7, marginTop: -7.5, fontSize: 10, lineHeight: 12 },
-  cardAcePip: { fontSize: 30, fontWeight: "700" },
+  cardPip: { position: "absolute", alignItems: "center", justifyContent: "center" },
   red: { color: "#b43b3b" },
   cardIndex: { color: "#a0a69e", fontSize: 8, marginTop: 7 },
   opponent: { backgroundColor: "#fbfaf6", borderWidth: 1, borderColor: "#dedfd5", padding: 13, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
