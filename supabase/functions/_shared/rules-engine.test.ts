@@ -102,6 +102,7 @@ Deno.test("only the visible top card of an opponent pile can be used", () => {
       { playerId: 2, cards: [card(2, "♦"), card(4, "♥")] }
     ]
   );
+  state.builds.push({ id: "existing", value: 9, ownerId: 3, teamId: 1, cards: [card(9, "♣")] });
   const result = createBuild(state, 1, [card(4).id], [], [card(2, "♦").id]);
   assertEquals(result.ok, false);
 });
@@ -218,7 +219,7 @@ Deno.test("server card ledger rejects duplicate or missing physical cards", () =
 });
 
 Deno.test("client ledger detects cards duplicated across game locations", () => {
-  const state = createRulesState(players.slice(0, 2), [card(9, "♣")]);
+  const state = createRulesState(players.slice(0, 2), [card(4)]);
   const errors = validateClientLedger(state, deck);
   assert(errors.some((error) => error.includes("must exist in exactly one location")));
 });
