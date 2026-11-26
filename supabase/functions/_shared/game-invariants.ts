@@ -97,3 +97,18 @@ export function validateBuildIntegrity(state: GameState, players: PlayerRow[]): 
     }
   }
 }
+
+
+export function awardRemainingFloorCards(state: GameState): number {
+  const lastCapturerSeat = state.lastCapturerSeat;
+  if (!Number.isInteger(lastCapturerSeat)) return 0;
+  const floor = state.floor as Card[];
+  const capturedPiles = state.capturedPiles as Record<string, Card[]>;
+  const winnerPile = capturedPiles[String(lastCapturerSeat)];
+  if (!Array.isArray(winnerPile)) {
+    throw new Error("End-of-game award failed: the last successful capturer has no captured pile.");
+  }
+  const awarded = floor.splice(0, floor.length);
+  winnerPile.push(...awarded);
+  return awarded.length;
+}
