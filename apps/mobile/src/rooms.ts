@@ -99,6 +99,7 @@ export interface OnlineGameSession {
   builds: Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Array<{ id: string; suit: string; rank: number }> }>;
   capturedPiles: Array<{ seat: number; count: number; topCard: { id: string; suit: string; rank: number } | null }>;
   ownershipRequests: Array<{ id: string; buildId: string; requesterSeat: number; ownerSeat: number; status: "pending" | "approved" | "rejected" | "cancelled" }>;
+  recoverableBuilds: Array<{ id: string; value: number; originalOwnerSeat: number; originalTeam: number; capturedBySeat: number; partnerRecoveryBlocked: boolean }>;
   deckCount: number;
 }
 
@@ -121,15 +122,16 @@ export async function getGameSession(
 
 export async function applyGameAction(
   roomId: string,
-  action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose" | "shiya" | "request-build-transfer" | "approve-build-transfer" | "reject-build-transfer",
+  action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose" | "recover-build" | "shiya" | "request-build-transfer" | "approve-build-transfer" | "reject-build-transfer",
   cardId?: string,
   combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] },
   buildId?: string,
-  targetCardId?: string
+  targetCardId?: string,
+  capturedBuildId?: string
 ): Promise<OnlineGameSession> {
   await requireSupabaseSession();
   const { data, error } = await client().functions.invoke("game-action", {
-    body: { roomId, action, cardId, buildId, targetCardId, ...(combination ?? {}) }
+    body: { roomId, action, cardId, buildId, targetCardId, capturedBuildId, ...(combination ?? {}) }
   });
   if (error) {
     const details = data && typeof data === "object" && "error" in data
