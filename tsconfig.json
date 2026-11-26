@@ -36,6 +36,6 @@
   ],
   "exclude": [
     "node_modules",
-    "supabase/functions/**/*.test.ts"
+    "supabase/functions/**/*.ts"
   ]
 }
