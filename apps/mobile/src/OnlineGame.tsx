@@ -19,36 +19,28 @@ type Props = {
   onRejectTransfer: (buildId: string) => void;
 };
 
-function pipPositions(rank: number): Array<{ x: number; y: number }> {
-  const rows: Record<number, number[]> = {
-    2: [25, 75],
-    3: [22, 50, 78],
-    4: [25, 75],
-    5: [25, 50, 75],
-    6: [22, 50, 78],
-    7: [30, 50, 70],
-    8: [18, 38, 62, 82],
-    9: [16, 34, 50, 66, 84],
-    10: [14, 32, 50, 68, 86],
-  };
-  if (rank === 1) return [{ x: 50, y: 50 }];
-  if (rank === 2 || rank === 3) return rows[rank].map((y) => ({ x: 50, y }));
-  const ys = rows[rank] ?? [];
-  if (rank === 4 || rank === 5) {
-    return [
-      { x: 29, y: 27 }, { x: 71, y: 27 },
-      ...(rank === 5 ? [{ x: 50, y: 50 }] : []),
-      { x: 29, y: 73 }, { x: 71, y: 73 },
-    ];
+type Pip = { x: number; y: number; inverted?: boolean };
+
+// Bicycle-style double-ended number-card layouts: every rank has exactly
+// its value in pips, with the lower-half pips turned for the opposite reader.
+function pipPositions(rank: number): Pip[] {
+  const pair = (y: number, inverted = false): Pip[] => [
+    { x: 31, y, inverted }, { x: 69, y, inverted },
+  ];
+  const center = (y: number, inverted = false): Pip => ({ x: 50, y, inverted });
+  switch (rank) {
+    case 1: return [center(50)];
+    case 2: return [center(29), center(71, true)];
+    case 3: return [center(23), center(50), center(77, true)];
+    case 4: return [...pair(27), ...pair(73, true)];
+    case 5: return [...pair(25), center(50), ...pair(75, true)];
+    case 6: return [...pair(22), ...pair(50), ...pair(78, true)];
+    case 7: return [...pair(19), ...pair(39), center(51), ...pair(81, true)].slice(0, 7);
+    case 8: return [...pair(18), ...pair(38), ...pair(62, true), ...pair(82, true)];
+    case 9: return [...pair(16), ...pair(33), center(50), ...pair(67, true), ...pair(84, true)].slice(0, 9);
+    case 10: return [...pair(15), ...pair(32), center(43), center(57, true), ...pair(68, true), ...pair(85, true)];
+    default: return [];
   }
-  const positions: Array<{ x: number; y: number }> = [];
-  ys.forEach((y, index) => {
-    positions.push({ x: 29, y });
-    positions.push({ x: 71, y });
-  });
-  if (rank === 7) positions.push({ x: 50, y: 16 });
-  if (rank === 9) positions.push({ x: 50, y: 50 });
-  return positions;
 }
 
 function PlayingCardFace({ rank, suit, compact = false }: { rank: number; suit: string; compact?: boolean }) {
@@ -68,7 +60,7 @@ function PlayingCardFace({ rank, suit, compact = false }: { rank: number; suit: 
             styles.cardPip,
             compact && styles.cardPipCompact,
             redSuit && styles.red,
-            { left: `${pip.x}%`, top: `${pip.y}%` },
+            { left: `${pip.x}%`, top: `${pip.y}%`, transform: [{ rotate: pip.inverted ? "180deg" : "0deg" }] },
           ]}>{symbol}</Text>
         ))}
       </View>
@@ -346,8 +338,8 @@ const styles = StyleSheet.create({
   cardCornerRank: { color: "#1b2a22", fontSize: 11, lineHeight: 12, fontWeight: "900" },
   cardCornerSuit: { color: "#1b2a22", fontSize: 9, lineHeight: 10, fontWeight: "800" },
   cardPips: { ...StyleSheet.absoluteFillObject },
-  cardPip: { position: "absolute", width: 18, marginLeft: -9, marginTop: -8, textAlign: "center", fontSize: 15, lineHeight: 17, fontWeight: "700" },
-  cardPipCompact: { width: 14, marginLeft: -7, marginTop: -6, fontSize: 10, lineHeight: 12 },
+  cardPip: { position: "absolute", width: 18, height: 20, marginLeft: -9, marginTop: -10, textAlign: "center", textAlignVertical: "center", fontSize: 16, lineHeight: 19, fontWeight: "700" },
+  cardPipCompact: { width: 14, height: 15, marginLeft: -7, marginTop: -7.5, fontSize: 10, lineHeight: 12 },
   cardAcePip: { fontSize: 30, fontWeight: "700" },
   red: { color: "#b43b3b" },
   cardIndex: { color: "#a0a69e", fontSize: 8, marginTop: 7 },
