@@ -7,7 +7,7 @@ function safeContext(context: ErrorContext = {}) {
       safe[key] = "[REDACTED]";
     } else if (value === null || ["string", "number", "boolean", "undefined"].includes(typeof value)) {
       safe[key] = typeof value === "string"
-        ? value.replace(/Bearer\\s+[^\\s]+/gi, "Bearer [REDACTED]")
+        ? value.replace(/Bearer\s+[^\s]+/gi, "Bearer [REDACTED]")
         : value;
     }
   }
