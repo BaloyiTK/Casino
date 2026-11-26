@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { OnlineGameSession, RoomSummary } from "./rooms";
 
 type Props = {
@@ -17,6 +17,7 @@ type Props = {
   onRequestTransfer: (buildId: string) => void;
   onApproveTransfer: (buildId: string) => void;
   onRejectTransfer: (buildId: string) => void;
+  onForfeit: () => void;
 };
 
 type Pip = { x: number; y: number; inverted?: boolean };
@@ -72,7 +73,7 @@ function PlayingCardFace({ rank, suit, compact = false }: { rank: number; suit: 
   );
 }
 
-export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose, onRecoverBuild, onShiya, onRequestTransfer, onApproveTransfer, onRejectTransfer }: Props) {
+export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose, onRecoverBuild, onShiya, onRequestTransfer, onApproveTransfer, onRejectTransfer, onForfeit }: Props) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [buildMode, setBuildMode] = useState(false);
   const [buildHandIds, setBuildHandIds] = useState<string[]>([]);
@@ -111,6 +112,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
         <Text style={styles.turnLabel}>{session.phase !== "playing" ? "MATCH STATUS" : myTurn ? "YOUR TURN" : "CURRENT TURN"}</Text>
         <Text style={styles.turnName}>{session.phase === "game-complete" ? "Game finished" : session.phase === "round-complete" ? "Round finished" : nameForSeat(session.currentSeat)}</Text>
         <Text style={styles.muted}>Seat {session.currentSeat} · {session.deckCount} cards remain in the deck</Text>
+        {session.message ? <Text style={styles.resultMessage}>{session.message}</Text> : null}
       </View>
 
       <View style={styles.table}>
@@ -288,6 +290,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
         <Text style={styles.noticeTitle}>PRIVATE HAND PROTECTION</Text>
         <Text style={styles.muted}>Only your own cards are sent to this device. Other players' card identities and the remaining deck stay on the server.</Text>
       </View>
+      {session.phase === "playing" ? <Pressable disabled={busy} onPress={() => Alert.alert("Forfeit match?", session.gameMode === "two" ? "If you forfeit, the other player wins immediately." : "If you forfeit, your team loses and the opposing team wins immediately.", [{ text: "KEEP PLAYING", style: "cancel" }, { text: "FORFEIT MATCH", style: "destructive", onPress: onForfeit }])} style={[styles.forfeitButton, busy && styles.disabled]}><Text style={styles.forfeitText}>FORFEIT MATCH</Text></Pressable> : null}
       <Text style={styles.footer}>CARD ORDER IS PRESERVED · NO AUTOMATIC SORTING</Text>
     </ScrollView>
   );
@@ -298,6 +301,9 @@ const styles = StyleSheet.create({
   kicker: { color: "#9a8050", fontSize: 10, fontWeight: "800", letterSpacing: 2, marginTop: 24 },
   title: { color: "#1b2a22", fontSize: 34, lineHeight: 40, fontWeight: "300", marginTop: 12, marginBottom: 22 },
   turnPanel: { backgroundColor: "#174c39", padding: 18, marginBottom: 14 },
+  resultMessage: { color: "#fff", fontSize: 12, lineHeight: 18, marginTop: 10 },
+  forfeitButton: { borderWidth: 1, borderColor: "#a94442", padding: 13, alignItems: "center", marginTop: 4, marginBottom: 14 },
+  forfeitText: { color: "#a94442", fontSize: 10, fontWeight: "800", letterSpacing: 1 },
   turnLabel: { color: "#d6c59e", fontSize: 9, fontWeight: "800", letterSpacing: 1.5 },
   turnName: { color: "#fff", fontSize: 24, fontWeight: "700", marginTop: 5 },
   muted: { color: "#9da99f", fontSize: 10, lineHeight: 15, marginTop: 5 },
