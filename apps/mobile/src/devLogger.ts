@@ -21,9 +21,16 @@ export function logDevError(
 ): void {
   if (!__DEV__) return;
 
+  const record = typeof error === "object" && error !== null
+    ? error as Record<string, unknown>
+    : null;
   const normalized = error instanceof Error
     ? { name: error.name, message: error.message, stack: error.stack }
-    : { name: "UnknownError", message: String(error) };
+    : {
+        name: typeof record?.name === "string" ? record.name : "UnknownError",
+        message: typeof record?.message === "string" ? record.message : String(error),
+        code: typeof record?.code === "string" ? record.code : undefined
+      };
 
   console.error("[Casino development error]", {
     timestamp: new Date().toISOString(),
