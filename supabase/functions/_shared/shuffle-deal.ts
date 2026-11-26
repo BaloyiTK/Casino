@@ -61,7 +61,7 @@ export function validateDeckAndDeal(
       Array.from({ length: playerCount }, (_, index) => String(index + 1)).some((seat) => !(seat in hands))) {
     throw new Error("Shuffle/deal validation failed: player seats are incomplete.");
   }
-  const expected = new Map(SUITS.flatMap((suit) =>
+  const expected = new Map<string, { suit: Suit; rank: number }>(SUITS.flatMap((suit) =>
     Array.from({ length: 10 }, (_, index) => [`${suit}-${index + 1}`, { suit, rank: index + 1 }] as const)
   ));
   const dealt = Object.values(hands).flat();
