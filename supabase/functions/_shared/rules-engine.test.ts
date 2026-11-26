@@ -113,8 +113,8 @@ Deno.test("build capture requires at least one own hand card and exact value", (
   assert(built.ok);
   const noHand = captureBuild(built.state, 2, built.state.builds[0].id, [], [card(1, "♣").id]);
   assertEquals(noHand.ok, false);
-  const wrongTotal = captureBuild(built.state, 2, built.state.builds[0].id, [card(7, "♥").id], []);
-  assertEquals(wrongTotal.ok, true);
+  const wrongTotal = captureBuild(built.state, 2, built.state.builds[0].id, [card(2, "♦").id], []);
+  assertEquals(wrongTotal.ok, false);
 });
 
 Deno.test("a player cannot capture a partner-owned build before ownership changes", () => {
