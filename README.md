@@ -21,6 +21,20 @@ Or from the repository root after installing the mobile dependencies:
 npm run mobile
 ```
 
+## Run the full test suite
+
+Install dependencies once, then run the repository-wide checks:
+
+```bash
+npm install
+npm --prefix apps/mobile install
+npm test
+```
+
+The `npm test` runner checks root ESLint, root TypeScript, the Next.js production build, Expo/React Native TypeScript, Supabase Edge Function types, card/build invariants, recovery rules, and gameplay regression tests. GitHub Actions runs the same command for pushes to `main` and pull requests.
+
+These are automated code-level checks. A live multiplayer playtest still requires a configured Supabase project and multiple signed-in devices.
+
 ## Development principles
 
 - `docs/rules/LOCKED_RULES.md` is the source of truth for confirmed game rules.
