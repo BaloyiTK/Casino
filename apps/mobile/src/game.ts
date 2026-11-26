@@ -70,6 +70,28 @@ export function shuffleDeck(): Card[] {
   return secureShuffle(shuffledSuits);
 }
 
+function validateDeal(players: Player[], deck: Card[], floor: Card[], expectedDeckCount: number, expectedTotalCards: number): void {
+  const expected = new Map(createDeck().map((card) => [card.id, card]));
+  const dealt = players.flatMap((player) => player.hand);
+  const allCards = [...deck, ...dealt];
+  const ids = allCards.map((card) => card.id);
+  if (allCards.length !== expectedTotalCards || new Set(ids).size !== expectedTotalCards) {
+    throw new Error("Shuffle/deal validation failed: card count or uniqueness is invalid.");
+  }
+  for (const card of allCards) {
+    const canonical = expected.get(card.id);
+    if (!canonical || canonical.suit !== card.suit || canonical.rank !== card.rank) {
+      throw new Error("Shuffle/deal validation failed: card suit or rank does not match its canonical ID.");
+    }
+  }
+  if (players.length !== 2 && players.length !== 4) throw new Error("Invalid player count for dealing.");
+  if (players.some((player) => player.hand.length !== 10)) {
+    throw new Error("Shuffle/deal validation failed: every player must have exactly 10 cards.");
+  }
+  if (deck.length !== expectedDeckCount) throw new Error("Shuffle/deal validation failed: unexpected remaining deck size.");
+  if (floor.length !== 0) throw new Error("Shuffle/deal validation failed: the starting floor must be empty.");
+}
+
 function dealTen(players: Player[], deck: Card[]): { players: Player[]; deck: Card[] } {
   const nextPlayers = players.map((player) => ({ ...player, hand: [...player.hand] }));
   const nextDeck = [...deck];
@@ -93,7 +115,21 @@ export function startGame(mode: GameMode): GameState {
     team: mode === "two" ? id : id % 2,
     hand: []
   }));
-  const dealt = dealTen(emptyPlayers, shuffleDeck());
+  let dealt: { players: Player[]; deck: Card[] } | undefined;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      dealt = dealTen(emptyPlayers, shuffleDeck());
+      validateDeal(dealt.players, dealt.deck, [], mode === "two" ? 20 : 0, 40);
+      break;
+    } catch (error) {
+      lastError = error;
+      dealt = undefined;
+    }
+  }
+  if (!dealt) {
+    throw new Error(`Could not create a valid deal after 3 complete shuffle/deal attempts: ${lastError instanceof Error ? lastError.message : "unknown validation error"}`);
+  }
   return {
     mode,
     players: dealt.players,
@@ -131,6 +167,7 @@ export function endTurn(state: GameState): GameState {
 
   if (allHandsEmpty && state.mode === "two" && state.round === 1) {
     const dealt = dealTen(state.players, state.deck);
+    validateDeal(dealt.players, dealt.deck, state.floor, 0, 20);
     return {
       ...state,
       players: dealt.players,
