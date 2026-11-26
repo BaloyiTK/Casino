@@ -16,7 +16,10 @@
     "api:start": "npm run start --workspace @casino/api",
     "api:stop": "npm run stop --workspace @casino/api",
     "api:typecheck": "npm run typecheck --workspace @casino/api",
-    "api:test": "npm run test --workspace @casino/api"
+    "api:test": "npm run test --workspace @casino/api",
+    "api:functions:serve": "npm run functions:serve --workspace @casino/api",
+    "api:db:reset": "npm run db:reset --workspace @casino/api",
+    "api:db:push": "npm run db:push --workspace @casino/api"
   },
   "dependencies": {
     "next": "^15.5.6",
