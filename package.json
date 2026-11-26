@@ -2,12 +2,11 @@
   "name": "casino-card-game",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/mobile",
+    "apps/api"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint app lib",
-    "typecheck": "tsc --noEmit",
     "mobile": "npm run start --workspace @casino/mobile",
     "mobile:android": "npm run android --workspace @casino/mobile",
     "mobile:ios": "npm run ios --workspace @casino/mobile",
@@ -20,23 +19,5 @@
     "api:functions:serve": "npm run functions:serve --workspace @casino/api",
     "api:db:reset": "npm run db:reset --workspace @casino/api",
     "api:db:push": "npm run db:push --workspace @casino/api"
-  },
-  "dependencies": {
-    "next": "^15.5.6",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
-  },
-  "devDependencies": {
-    "@types/node": "^22.18.6",
-    "@types/react": "^19.1.13",
-    "@types/react-dom": "^19.1.9",
-    "eslint": "^9.36.0",
-    "eslint-config-next": "^15.5.6",
-    "typescript": "^5.9.2",
-    "@tailwindcss/postcss": "^4.1.13"
-  },
-  "workspaces": [
-    "apps/mobile",
-    "apps/api"
-  ]
+  }
 }
