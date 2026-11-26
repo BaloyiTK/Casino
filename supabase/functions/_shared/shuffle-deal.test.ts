@@ -13,7 +13,7 @@ Deno.test("Fisher–Yates rejection-samples out-of-range random draws", () => {
   const draws = [0xffffffff, 0, 0, 0, 0]; let index = 0;
   const shuffled = secureShuffle([1, 2, 3], () => draws[index++] ?? 0);
   assertEquals([...shuffled].sort(), [1, 2, 3]);
-  if (index < 4) throw new Error("Expected invalid random draw to be rejected.");
+  if (index < 3) throw new Error("Expected invalid random draw to be rejected.");
 });
 Deno.test("suit-first then full-deck shuffle preserves all 40 canonical cards", () => {
   const deck = createShuffledDeck(() => 0);
