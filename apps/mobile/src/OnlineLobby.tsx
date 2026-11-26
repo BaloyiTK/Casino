@@ -142,7 +142,8 @@ export default function OnlineLobby() {
     setBusy(true); setError("");
     try {
       setGameSession(await applyGameAction(room.room_id, action, cardId, combination, buildId, targetCardId, capturedBuildId));
-    } catch (e) { logDevError("lobby.submit-game-action", e);
+    } catch (e) {
+      logDevError("lobby.submit-game-action", e, { roomId: room.room_id, action });
       setError(e instanceof Error ? e.message : "Could not apply that move.");
       try { setGameSession(await getGameSession(room.room_id, "get")); } catch { /* Keep the original action error visible. */ }
     } finally {
