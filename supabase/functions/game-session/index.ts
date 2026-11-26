@@ -113,6 +113,7 @@ function publicSession(state: Record<string, unknown>, player: PlayerRow, game: 
     builds: (state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>).map((build) => ({ id: build.id, value: build.value, ownerSeat: build.ownerSeat, team: build.team, cards: build.cards })),
     capturedPiles: Object.entries(state.capturedPiles as Record<string, Card[]>).map(([seat, pile]) => ({ seat: Number(seat), count: pile.length, topCard: pile.length ? pile[pile.length - 1] : null })),
     ownershipRequests: state.ownershipRequests ?? [],
+    recoverableBuilds: ((state.recoverableBuilds ?? []) as Array<Record<string, unknown>>).filter((item) => item.status === "captured"),
     deckCount: deck.length
   };
 }
@@ -192,6 +193,7 @@ Deno.serve(async (request: Request) => {
         floor: [],
         builds: [],
         capturedPiles: Object.fromEntries(orderedPlayers.map((p) => [String(p.seat), []])),
+        recoverableBuilds: [],
         round: 1,
         currentSeat: 1,
         roundStarter: 1,
