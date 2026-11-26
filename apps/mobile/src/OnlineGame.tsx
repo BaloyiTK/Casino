@@ -19,26 +19,56 @@ type Props = {
   onRejectTransfer: (buildId: string) => void;
 };
 
-function cardLabel(card: { rank: number; suit: string }) {
-  return `${card.rank === 1 ? "A" : card.rank}${card.suit}`;
+function pipPositions(rank: number): Array<{ x: number; y: number }> {
+  const rows: Record<number, number[]> = {
+    2: [25, 75],
+    3: [22, 50, 78],
+    4: [25, 75],
+    5: [25, 50, 75],
+    6: [22, 50, 78],
+    7: [18, 38, 62, 82],
+    8: [18, 38, 62, 82],
+    9: [16, 34, 50, 66, 84],
+    10: [14, 32, 50, 68, 86],
+  };
+  if (rank === 1) return [{ x: 50, y: 50 }];
+  if (rank === 2 || rank === 3) return rows[rank].map((y) => ({ x: 50, y }));
+  const ys = rows[rank] ?? [];
+  if (rank === 4 || rank === 5) {
+    return [
+      { x: 29, y: 27 }, { x: 71, y: 27 },
+      ...(rank === 5 ? [{ x: 50, y: 50 }] : []),
+      { x: 29, y: 73 }, { x: 71, y: 73 },
+    ];
+  }
+  const positions: Array<{ x: number; y: number }> = [];
+  ys.forEach((y, index) => {
+    positions.push({ x: 29, y });
+    positions.push({ x: 71, y });
+  });
+  if (rank === 7 || rank === 9) positions.push({ x: 50, y: 50 });
+  return positions;
 }
-
 
 function PlayingCardFace({ rank, suit, compact = false }: { rank: number; suit: string; compact?: boolean }) {
   const symbol = suit === "H" || suit === "hearts" ? "♥" : suit === "D" || suit === "diamonds" ? "♦" : suit === "S" || suit === "spades" ? "♠" : suit === "C" || suit === "clubs" ? "♣" : suit;
   const redSuit = symbol === "♥" || symbol === "♦";
   const value = rank === 1 ? "A" : String(rank);
+  const pips = pipPositions(rank);
   return (
     <View style={[styles.cardFaceInner, compact && styles.cardFaceCompact]}>
       <View style={styles.cardCorner}>
         <Text style={[styles.cardCornerRank, redSuit && styles.red]}>{value}</Text>
         <Text style={[styles.cardCornerSuit, redSuit && styles.red]}>{symbol}</Text>
       </View>
-      <View style={[styles.cardPips, compact && styles.cardPipsCompact]}>
-        {rank === 1 ? (
-          <Text style={[styles.cardAcePip, redSuit && styles.red]}>{symbol}</Text>
-        ) : Array.from({ length: rank }, (_, index) => (
-          <Text key={index} style={[styles.cardPip, redSuit && styles.red, compact && styles.cardPipCompact]}>{symbol}</Text>
+      <View pointerEvents="none" style={styles.cardPips}>
+        {pips.map((pip, index) => (
+          <Text key={index} style={[
+            styles.cardPip,
+            compact && styles.cardPipCompact,
+            redSuit && styles.red,
+            { left: `${pip.x}%`, top: `${pip.y}%` },
+          ]}>{symbol}</Text>
         ))}
       </View>
       <View style={[styles.cardCorner, styles.cardCornerBottom]}>
@@ -314,10 +344,9 @@ const styles = StyleSheet.create({
   cardCornerBottom: { alignSelf: "flex-end", transform: [{ rotate: "180deg" }] },
   cardCornerRank: { color: "#1b2a22", fontSize: 11, lineHeight: 12, fontWeight: "900" },
   cardCornerSuit: { color: "#1b2a22", fontSize: 9, lineHeight: 10, fontWeight: "800" },
-  cardPips: { flex: 1, width: "100%", flexDirection: "row", flexWrap: "wrap", alignContent: "center", alignItems: "center", justifyContent: "center" },
-  cardPipsCompact: { alignContent: "center" },
-  cardPip: { width: "50%", textAlign: "center", fontSize: 13, lineHeight: 15, fontWeight: "700" },
-  cardPipCompact: { fontSize: 9, lineHeight: 10 },
+  cardPips: { ...StyleSheet.absoluteFillObject },
+  cardPip: { position: "absolute", width: 18, marginLeft: -9, marginTop: -8, textAlign: "center", fontSize: 15, lineHeight: 17, fontWeight: "700" },
+  cardPipCompact: { width: 14, marginLeft: -7, marginTop: -6, fontSize: 10, lineHeight: 12 },
   cardAcePip: { fontSize: 30, fontWeight: "700" },
   red: { color: "#b43b3b" },
   cardIndex: { color: "#a0a69e", fontSize: 8, marginTop: 7 },
