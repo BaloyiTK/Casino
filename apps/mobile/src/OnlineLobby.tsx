@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, StyleShe
 import { applyGameAction, createRoom, getGameSession, getRoom, isSupabaseConfigured, joinRoom, joinPublicRoom, listPublicRooms, watchRoom, type OnlineGameSession, type RoomSummary, type RoomVisibility } from "./rooms";
 import OnlineGame from "./OnlineGame";
 import type { GameMode } from "./game";
+import { logDevError } from "./devLogger";
 
 const ACTIVE_ROOM_KEY = "casino.activeRoomId";
 
@@ -151,7 +152,12 @@ export default function OnlineLobby() {
 
   async function share() {
     if (!room) return;
-    await Share.share({ message: "Join my Casino game. Room code: " + room.room_code });
+    try {
+      await Share.share({ message: "Join my Casino game. Room code: " + room.room_code });
+    } catch (e) {
+      logDevError("lobby.share-room", e, { roomId: room.room_id });
+      setError(e instanceof Error ? e.message : "Could not share the room invite.");
+    }
   }
 
 
