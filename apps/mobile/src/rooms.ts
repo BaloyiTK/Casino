@@ -86,7 +86,9 @@ export function watchRoom(roomId: string, onChange: () => void) {
     });
 
   return () => {
-    void client().removeChannel(channel);
+    void client().removeChannel(channel).catch((error) => {
+      logDevError("room.realtime-unsubscribe", error, { roomId });
+    });
   };
 }
 
