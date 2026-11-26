@@ -70,7 +70,7 @@ export function shuffleDeck(): Card[] {
   return secureShuffle(shuffledSuits);
 }
 
-function validateDeal(players: Player[], deck: Card[], floor: Card[], expectedDeckCount: number, expectedTotalCards: number): void {
+function validateDeal(players: Player[], deck: Card[], floor: Card[], expectedDeckCount: number, expectedTotalCards: number, requireEmptyFloor = true): void {
   const expected = new Map(createDeck().map((card) => [card.id, card]));
   const dealt = players.flatMap((player) => player.hand);
   const allCards = [...deck, ...dealt];
@@ -89,7 +89,7 @@ function validateDeal(players: Player[], deck: Card[], floor: Card[], expectedDe
     throw new Error("Shuffle/deal validation failed: every player must have exactly 10 cards.");
   }
   if (deck.length !== expectedDeckCount) throw new Error("Shuffle/deal validation failed: unexpected remaining deck size.");
-  if (floor.length !== 0) throw new Error("Shuffle/deal validation failed: the starting floor must be empty.");
+  if (requireEmptyFloor && floor.length !== 0) throw new Error("Shuffle/deal validation failed: the starting floor must be empty.");
 }
 
 function dealTen(players: Player[], deck: Card[]): { players: Player[]; deck: Card[] } {
@@ -167,7 +167,7 @@ export function endTurn(state: GameState): GameState {
 
   if (allHandsEmpty && state.mode === "two" && state.round === 1) {
     const dealt = dealTen(state.players, state.deck);
-    validateDeal(dealt.players, dealt.deck, state.floor, 0, 20);
+    validateDeal(dealt.players, dealt.deck, state.floor, 0, 20, false);
     return {
       ...state,
       players: dealt.players,
