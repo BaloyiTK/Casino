@@ -46,6 +46,16 @@ export async function joinRoom(code: string, displayName: string): Promise<RoomS
   return data as RoomSummary;
 }
 
+export async function joinPublicRoom(roomId: string, displayName: string): Promise<RoomSummary> {
+  await requireSupabaseSession();
+  const { data, error } = await client().rpc("casino_join_public_room", {
+    p_room_id: roomId,
+    p_display_name: displayName.trim()
+  });
+  if (error) throw new Error(error.message);
+  return data as RoomSummary;
+}
+
 export async function listPublicRooms(): Promise<RoomSummary[]> {
   await requireSupabaseSession();
   const { data, error } = await client().rpc("casino_list_public_rooms");
