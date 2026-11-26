@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 import { assertEquals, assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { awardRemainingFloorCards, validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow } from "./game-invariants.ts";
+import { awardRemainingFloorCards, blockPartnerRecoveryForDraft, canRecoverCapturedBuild, validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow, type RecoverableBuild } from "./game-invariants.ts";
 
 const suits = ["♠", "♥", "♦", "♣"] as const;
 const allCards: Card[] = suits.flatMap((suit) =>
@@ -109,4 +109,38 @@ Deno.test("end-of-game award gives remaining loose floor cards to the last succe
   assertEquals(state.floor.length, 0);
   assertEquals(state.capturedPiles["2"].map((card: Card) => card.id), [allCards[38].id, allCards[39].id]);
   validateCardLedger(state);
+});
+
+Deno.test("drafting the matching value blocks only the partner for that captured build", () => {
+  const captured: RecoverableBuild[] = [{
+    id: "captured-1", value: 7, originalOwnerSeat: 1, originalTeam: 1,
+    capturedBySeat: 2, status: "captured", partnerRecoveryBlocked: false
+  }];
+  blockPartnerRecoveryForDraft(captured, 1, 7);
+  assertEquals(canRecoverCapturedBuild(captured[0], 1, 1), true);
+  assertEquals(canRecoverCapturedBuild(captured[0], 3, 1), false);
+  assertEquals(canRecoverCapturedBuild(captured[0], 2, 2), false);
+});
+
+Deno.test("a newly captured recovery build gives the partner a fresh recovery opportunity", () => {
+  const earlier: RecoverableBuild = {
+    id: "captured-1", value: 7, originalOwnerSeat: 1, originalTeam: 1,
+    capturedBySeat: 2, status: "recovered", partnerRecoveryBlocked: true, recoveredBySeat: 1
+  };
+  const recapturedNewBuild: RecoverableBuild = {
+    id: "captured-2", value: 7, originalOwnerSeat: 1, originalTeam: 1,
+    capturedBySeat: 4, status: "captured", partnerRecoveryBlocked: false
+  };
+  assertEquals(canRecoverCapturedBuild(earlier, 3, 1), false);
+  assertEquals(canRecoverCapturedBuild(recapturedNewBuild, 3, 1), true);
+});
+
+Deno.test("drafting does not block a different captured build value or a recovered record", () => {
+  const captured: RecoverableBuild[] = [
+    { id: "captured-7", value: 7, originalOwnerSeat: 1, originalTeam: 1, capturedBySeat: 2, status: "captured", partnerRecoveryBlocked: false },
+    { id: "captured-8", value: 8, originalOwnerSeat: 1, originalTeam: 1, capturedBySeat: 2, status: "captured", partnerRecoveryBlocked: false },
+    { id: "recovered-7", value: 7, originalOwnerSeat: 1, originalTeam: 1, capturedBySeat: 2, status: "recovered", partnerRecoveryBlocked: false }
+  ];
+  blockPartnerRecoveryForDraft(captured, 1, 7);
+  assertEquals(captured.map((item) => item.partnerRecoveryBlocked), [true, false, false]);
 });
