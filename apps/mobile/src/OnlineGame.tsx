@@ -26,7 +26,7 @@ function pipPositions(rank: number): Array<{ x: number; y: number }> {
     4: [25, 75],
     5: [25, 50, 75],
     6: [22, 50, 78],
-    7: [18, 38, 62, 82],
+    7: [30, 50, 70],
     8: [18, 38, 62, 82],
     9: [16, 34, 50, 66, 84],
     10: [14, 32, 50, 68, 86],
@@ -46,7 +46,8 @@ function pipPositions(rank: number): Array<{ x: number; y: number }> {
     positions.push({ x: 29, y });
     positions.push({ x: 71, y });
   });
-  if (rank === 7 || rank === 9) positions.push({ x: 50, y: 50 });
+  if (rank === 7) positions.push({ x: 50, y: 16 });
+  if (rank === 9) positions.push({ x: 50, y: 50 });
   return positions;
 }
 
