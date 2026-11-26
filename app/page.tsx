@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   type GameMode,
   type GameState,
@@ -34,7 +35,6 @@ export default function Home() {
   const [mode, setMode] = useState<GameMode>("two");
   const [game, setGame] = useState<GameState | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const activePlayer = game?.players[game.currentPlayer];
   const totalCards = useMemo(
     () => game ? game.players.reduce((sum, player) => sum + player.hand.length, 0) + game.deck.length + game.floor.length : 0,
     [game]
@@ -60,7 +60,7 @@ export default function Home() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="/" aria-label="Casino home"><span className="brand-mark">♠</span> CASINO</a>
+        <Link className="brand" href="/" aria-label="Casino home"><span className="brand-mark">♠</span> CASINO</Link>
         <span className="topbar-note">A game of skill, timing &amp; capture</span>
         <button className="new-game top-button" onClick={begin}>＋ New game</button>
       </header>
