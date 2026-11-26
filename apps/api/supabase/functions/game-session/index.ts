@@ -21,6 +21,8 @@ function publicSession(state: Record<string, unknown>, player: PlayerRow, game: 
     round: state.round,
     currentSeat: state.currentSeat,
     phase: state.phase,
+    message: typeof state.message === "string" ? state.message : "",
+    forfeit: state.forfeit ?? null,
     ownSeat: player.seat,
     ownHand: hands[String(player.seat)] ?? [],
     ownHandCount: (hands[String(player.seat)] ?? []).length,
