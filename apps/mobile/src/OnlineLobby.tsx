@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, StyleSheet, Text, TextInput, View } from "react-native";
-import { applyGameAction, createRoom, getGameSession, getRoom, isSupabaseConfigured, joinRoom, listPublicRooms, watchRoom, type OnlineGameSession, type RoomSummary, type RoomVisibility } from "./rooms";
+import { applyGameAction, createRoom, getGameSession, getRoom, isSupabaseConfigured, joinRoom, joinPublicRoom, listPublicRooms, watchRoom, type OnlineGameSession, type RoomSummary, type RoomVisibility } from "./rooms";
 import OnlineGame from "./OnlineGame";
 import type { GameMode } from "./game";
 
@@ -115,6 +115,16 @@ export default function OnlineLobby() {
     finally { setBusy(false); }
   }
 
+  async function joinPublic(roomId: string) {
+    setBusy(true); setError("");
+    try {
+      const result = await joinPublicRoom(roomId, displayName);
+      await saveActiveRoomId(result.room_id);
+      setRoom(await getRoom(result.room_id));
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not join that public slot."); }
+    finally { setBusy(false); }
+  }
+
   async function startGame() {
     if (!room) return;
     setBusy(true); setError("");
@@ -205,9 +215,15 @@ export default function OnlineLobby() {
             <View style={styles.panel}>
               <View style={styles.lobbyHeader}><Text style={styles.label}>PUBLIC TABLES</Text><Pressable onPress={() => void refreshRooms()}><Text style={styles.refresh}>REFRESH ↻</Text></Pressable></View>
               {publicRooms.length ? publicRooms.map(r => (
-                <View key={r.room_id} style={styles.playerRow}>
-                  <View><Text style={styles.optionTitle}>{r.game_mode === "two" ? "Two Hands" : "Four Hands"}</Text><Text style={styles.muted}>{r.occupied_slots}/{r.max_players} players · {r.room_code}</Text></View>
-                  <Pressable onPress={() => void join(r.room_code)} disabled={busy} style={styles.join}><Text style={styles.primaryText}>JOIN</Text></Pressable>
+                <View key={r.room_id} style={styles.publicRoom}>
+                  <View style={styles.publicRoomInfo}>
+                    <Text style={styles.optionTitle}>{r.game_mode === "two" ? "Two Hands" : "Four Hands"}</Text>
+                    <Text style={styles.muted}>{r.occupied_slots}/{r.max_players} players seated</Text>
+                  </View>
+                  <View style={styles.publicSlot}>
+                    <View><Text style={styles.slotTitle}>OPEN SLOT</Text><Text style={styles.muted}>{r.max_players - r.occupied_slots} {r.max_players - r.occupied_slots === 1 ? "seat" : "seats"} available</Text></View>
+                    <Pressable onPress={() => void joinPublic(r.room_id)} disabled={busy || !displayName.trim()} style={styles.join}><Text style={styles.primaryText}>JOIN TABLE</Text></Pressable>
+                  </View>
                 </View>
               )) : <Text style={styles.muted}>No public tables with open slots right now.</Text>}
             </View>
@@ -243,6 +259,10 @@ const styles = StyleSheet.create({
   playerName: { color: "#1b2a22", fontSize: 12, fontWeight: "700" },
   host: { color: "#9a8050", fontSize: 9, fontWeight: "800" },
   openSlot: { borderWidth: 1, borderStyle: "dashed", borderColor: "#cbd2c7", padding: 12, marginBottom: 7 },
+  publicRoom: { borderTopWidth: 1, borderColor: "#e5e4db", paddingVertical: 12 },
+  publicRoomInfo: { marginBottom: 10 },
+  publicSlot: { borderWidth: 1, borderStyle: "dashed", borderColor: "#cbd2c7", padding: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  slotTitle: { color: "#245b43", fontSize: 10, fontWeight: "800", letterSpacing: 1 },
   lobbyHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   refresh: { color: "#245b43", fontSize: 9, fontWeight: "800" },
   join: { backgroundColor: "#174c39", paddingHorizontal: 15, paddingVertical: 10 },
