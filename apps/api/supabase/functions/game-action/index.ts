@@ -58,7 +58,7 @@ Deno.serve(async (request: Request) => {
     const roomId = typeof body.roomId === "string" ? body.roomId : "";
     const action = body.action;
     if (!roomId) throw new Error("A room ID is required.");
-    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build" && action !== "capture-loose" && action !== "recover-build" && action !== "shiya" && action !== "request-build-transfer" && action !== "approve-build-transfer" && action !== "reject-build-transfer") throw new Error("Unsupported game action.");
+    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build" && action !== "capture-loose" && action !== "recover-build" && action !== "shiya" && action !== "request-build-transfer" && action !== "approve-build-transfer" && action !== "reject-build-transfer" && action !== "forfeit") throw new Error("Unsupported game action.");
 
     const { data: room, error: roomError } = await admin
       .from("casino_rooms").select("id, game_mode").eq("id", roomId).maybeSingle();
@@ -83,7 +83,7 @@ Deno.serve(async (request: Request) => {
     if (gameError) throw gameError;
     if (!game) throw new Error("The host has not started this game.");
     if (game.status !== "playing") throw new Error("This game is complete and no longer accepts actions.");
-    if (game.current_seat !== player.seat && !["request-build-transfer", "approve-build-transfer", "reject-build-transfer"].includes(action)) throw new Error("It is not your turn.");
+    if (game.current_seat !== player.seat && !["request-build-transfer", "approve-build-transfer", "reject-build-transfer", "forfeit"].includes(action)) throw new Error("It is not your turn.");
 
     const { data: privateRow, error: privateError } = await admin
       .from("casino_game_private_state")
@@ -93,13 +93,23 @@ Deno.serve(async (request: Request) => {
     if (privateError) throw privateError;
 
     const state = JSON.parse(JSON.stringify(privateRow.state)) as Record<string, any>;
-    if (state.currentSeat !== player.seat && !["request-build-transfer", "approve-build-transfer", "reject-build-transfer"].includes(action)) throw new Error("The game turn is out of sync. Refresh and try again.");
+    if (state.currentSeat !== player.seat && !["request-build-transfer", "approve-build-transfer", "reject-build-transfer", "forfeit"].includes(action)) throw new Error("The game turn is out of sync. Refresh and try again.");
     const hands = state.hands as Record<string, Card[]>;
     const ownHand = hands[String(player.seat)];
     if (!Array.isArray(ownHand)) throw new Error("Your hand is missing from the game state.");
 
     let nextStatus: "playing" | "round-complete" | "game-complete" = "playing";
-    if (state.shiyaPending && action !== "capture-build") {
+    if (action === "forfeit") {
+      const team = players.length === 4 ? (player.seat % 2 === 1 ? 1 : 2) : null;
+      const winningTeam = team === null ? null : team === 1 ? 2 : 1;
+      const winningSeat = players.length === 2 ? (player.seat === 1 ? 2 : 1) : null;
+      state.phase = "game-complete";
+      state.forfeit = { forfeitingSeat: player.seat, losingTeam: team, winningTeam, winningSeat, reason: "Player forfeited the match." };
+      state.message = players.length === 2
+        ? `Seat ${player.seat} forfeited. Seat ${winningSeat} wins the match.`
+        : `Seat ${player.seat} forfeited. Team ${winningTeam} wins the match.`;
+      nextStatus = "game-complete";
+    } else if (state.shiyaPending && action !== "capture-build") {
       const pending = state.shiyaPending as { seat: number; team: number; buildIds: string[] };
       if (pending.seat !== player.seat) throw new Error("Only the player who performed Shiya may complete that turn.");
       state.phase = "game-complete";
@@ -466,7 +476,14 @@ Deno.serve(async (request: Request) => {
     validateBuildIntegrity(state, players);
 
     const transferAction = ["request-build-transfer", "approve-build-transfer", "reject-build-transfer"].includes(action);
-    const { data: newVersion, error: commitError } = transferAction
+    const { data: newVersion, error: commitError } = action === "forfeit"
+      ? await admin.rpc("casino_commit_game_forfeit", {
+          p_game_id: game.id,
+          p_actor_user_id: userId,
+          p_expected_version: privateRow.version,
+          p_next_state: state
+        })
+      : transferAction
       ? await admin.rpc("casino_commit_partner_transfer", {
           p_game_id: game.id,
           p_actor_user_id: userId,
@@ -495,6 +512,8 @@ Deno.serve(async (request: Request) => {
       round: state.round,
       currentSeat: state.currentSeat,
       phase: state.phase,
+      message: state.message ?? "",
+      forfeit: state.forfeit ?? null,
       ownSeat: currentPlayer.seat,
       ownHand: latestHands[String(currentPlayer.seat)] ?? [],
       ownHandCount: (latestHands[String(currentPlayer.seat)] ?? []).length,
