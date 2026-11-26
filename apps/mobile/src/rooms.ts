@@ -1,5 +1,6 @@
 export { isSupabaseConfigured } from "./supabase";
 import { requireSupabaseSession, supabase } from "./supabase";
+import { logDevError } from "./devLogger";
 
 export type RoomMode = "two" | "four";
 export type RoomVisibility = "public" | "private";
@@ -124,6 +125,7 @@ export async function getGameSession(
     body: { roomId, action }
   });
   if (error) {
+    logDevError("game-session.invoke", error, { roomId, action });
     const details = data && typeof data === "object" && "error" in data
       ? String((data as { error: unknown }).error)
       : error.message;
@@ -146,6 +148,7 @@ export async function applyGameAction(
     body: { roomId, action, cardId, buildId, targetCardId, capturedBuildId, ...(combination ?? {}) }
   });
   if (error) {
+    logDevError("game-action.invoke", error, { roomId, action });
     const details = data && typeof data === "object" && "error" in data
       ? String((data as { error: unknown }).error)
       : error.message;
