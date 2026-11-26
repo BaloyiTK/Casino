@@ -12,6 +12,7 @@ type Props = {
   onTopUp: (buildId: string, handCardIds: string[]) => void;
   onCaptureBuild: (buildId: string, selection: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }) => void;
   onCaptureLoose: (handCardId: string, floorCardId: string) => void;
+  onRecoverBuild: (capturedBuildId: string, selection: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }) => void;
   onShiya: (buildId: string) => void;
   onRequestTransfer: (buildId: string) => void;
   onApproveTransfer: (buildId: string) => void;
@@ -22,7 +23,7 @@ function cardLabel(card: { rank: number; suit: string }) {
   return `${card.rank === 1 ? "A" : card.rank}${card.suit}`;
 }
 
-export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose, onShiya, onRequestTransfer, onApproveTransfer, onRejectTransfer }: Props) {
+export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose, onRecoverBuild, onShiya, onRequestTransfer, onApproveTransfer, onRejectTransfer }: Props) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [buildMode, setBuildMode] = useState(false);
   const [buildHandIds, setBuildHandIds] = useState<string[]>([]);
@@ -33,14 +34,20 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
   const [captureHandIds, setCaptureHandIds] = useState<string[]>([]);
   const [captureFloorIds, setCaptureFloorIds] = useState<string[]>([]);
   const [capturePileIds, setCapturePileIds] = useState<string[]>([]);
+  const [recoverBuildId, setRecoverBuildId] = useState<string | null>(null);
+  const [recoverHandIds, setRecoverHandIds] = useState<string[]>([]);
+  const [recoverFloorIds, setRecoverFloorIds] = useState<string[]>([]);
+  const [recoverPileIds, setRecoverPileIds] = useState<string[]>([]);
   const myTurn = session.currentSeat === session.ownSeat && session.phase === "playing";
-  useEffect(() => { setSelectedCardId(null); setBuildMode(false); setBuildHandIds([]); setBuildFloorIds([]); setTopUpBuildId(null); setTopUpHandIds([]); setCaptureBuildId(null); setCaptureHandIds([]); setCaptureFloorIds([]); setCapturePileIds([]); }, [session.version]);
+  useEffect(() => { setSelectedCardId(null); setBuildMode(false); setBuildHandIds([]); setBuildFloorIds([]); setTopUpBuildId(null); setTopUpHandIds([]); setCaptureBuildId(null); setCaptureHandIds([]); setCaptureFloorIds([]); setCapturePileIds([]); setRecoverBuildId(null); setRecoverHandIds([]); setRecoverFloorIds([]); setRecoverPileIds([]); }, [session.version]);
   const toggleId = (ids: string[], id: string) => ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id];
   const buildValue = [...session.ownHand.filter((card) => buildHandIds.includes(card.id)), ...session.floor.filter((card) => buildFloorIds.includes(card.id))].reduce((sum, card) => sum + card.rank, 0);
   const topUpBuild = session.builds.find((build) => build.id === topUpBuildId);
   const selectedHandCard = session.ownHand.find((card) => card.id === selectedCardId);
   const topUpTotal = session.ownHand.filter((card) => topUpHandIds.includes(card.id)).reduce((sum, card) => sum + card.rank, 0);
   const captureBuild = session.builds.find((build) => build.id === captureBuildId);
+  const recoverBuild = session.recoverableBuilds.find((build) => build.id === recoverBuildId);
+  const recoverTotal = [...session.ownHand.filter((card) => recoverHandIds.includes(card.id)), ...session.floor.filter((card) => recoverFloorIds.includes(card.id)), ...session.capturedPiles.flatMap((pile) => pile.topCard && recoverPileIds.includes(pile.topCard.id) ? [pile.topCard] : [])].reduce((sum, card) => sum + card.rank, 0);
   const captureTotal = [...session.ownHand.filter((card) => captureHandIds.includes(card.id)), ...session.floor.filter((card) => captureFloorIds.includes(card.id)), ...session.capturedPiles.flatMap((pile) => pile.topCard && capturePileIds.includes(pile.topCard.id) ? [pile.topCard] : [])].reduce((sum, card) => sum + card.rank, 0);
   const clearBuildSelection = () => { setBuildHandIds([]); setBuildFloorIds([]); setBuildMode(false); };
   const players = room.players ?? [];
@@ -65,9 +72,9 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
         {session.floor.length ? (
           <View style={styles.cardGrid}>
             {session.floor.map((card) => (
-              <Pressable key={card.id} disabled={!myTurn || busy || (!buildMode && !captureBuildId && (!selectedHandCard || selectedHandCard.rank !== card.rank))} onPress={() => captureBuildId ? setCaptureFloorIds((ids) => toggleId(ids, card.id)) : buildMode ? setBuildFloorIds((ids) => toggleId(ids, card.id)) : selectedCardId ? onCaptureLoose(selectedCardId, card.id) : undefined} style={[styles.floorCard, (buildFloorIds.includes(card.id) || captureFloorIds.includes(card.id)) && styles.selectedCard]}>
+              <Pressable key={card.id} disabled={!myTurn || busy || (!buildMode && !captureBuildId && !recoverBuildId && (!selectedHandCard || selectedHandCard.rank !== card.rank))} onPress={() => captureBuildId ? setCaptureFloorIds((ids) => toggleId(ids, card.id)) : recoverBuildId ? setRecoverFloorIds((ids) => toggleId(ids, card.id)) : buildMode ? setBuildFloorIds((ids) => toggleId(ids, card.id)) : selectedCardId ? onCaptureLoose(selectedCardId, card.id) : undefined} style={[styles.floorCard, (buildFloorIds.includes(card.id) || captureFloorIds.includes(card.id) || recoverFloorIds.includes(card.id)) && styles.selectedCard]}>
                 <Text style={[styles.cardFace, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>
-                {buildMode || captureBuildId ? <Text style={styles.cardIndex}>{captureBuildId ? captureFloorIds.includes(card.id) ? "CAPTURE" : "ADD" : buildFloorIds.includes(card.id) ? "SELECTED" : "ADD"}</Text> : selectedHandCard?.rank === card.rank ? <Text style={styles.cardIndex}>MATCH · CAPTURE</Text> : null}
+                {buildMode || captureBuildId || recoverBuildId ? <Text style={styles.cardIndex}>{captureBuildId ? captureFloorIds.includes(card.id) ? "CAPTURE" : "ADD" : recoverBuildId ? recoverFloorIds.includes(card.id) ? "RECOVER" : "ADD" : buildFloorIds.includes(card.id) ? "SELECTED" : "ADD"}</Text> : selectedHandCard?.rank === card.rank ? <Text style={styles.cardIndex}>MATCH · CAPTURE</Text> : null}
               </Pressable>
             ))}
           </View>
@@ -114,11 +121,38 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
       </View>
 
       <View style={styles.buildsPanel}>
+        <Text style={styles.buildsHeading}>CAPTURED BUILDS · RECOVERY</Text>
+        {session.recoverableBuilds.filter((item) => {
+          const myTeam = session.gameMode === "two" ? session.ownSeat : (session.ownSeat % 2 === 1 ? 1 : 2);
+          return item.originalTeam === myTeam && (item.originalOwnerSeat === session.ownSeat || !item.partnerRecoveryBlocked);
+        }).map((item) => (
+          <View key={item.id} style={styles.buildRow}>
+            <View>
+              <Text style={styles.buildValue}>VALUE {item.value}</Text>
+              <Text style={styles.buildOwner}>Originally owned by {nameForSeat(item.originalOwnerSeat)} · Captured by {nameForSeat(item.capturedBySeat)}</Text>
+              <Pressable disabled={!myTurn || busy || session.builds.some((build) => build.ownerSeat === session.ownSeat)} onPress={() => {
+                setBuildMode(false); setTopUpBuildId(null); setCaptureBuildId(null); setSelectedCardId(null);
+                setRecoverBuildId(item.id); setRecoverHandIds([]); setRecoverFloorIds([]); setRecoverPileIds([]);
+              }} style={styles.topUpButton}><Text style={styles.topUpButtonText}>RECOVER BUILD</Text></Pressable>
+            </View>
+          </View>
+        ))}
+        {!session.recoverableBuilds.some((item) => {
+          const myTeam = session.gameMode === "two" ? session.ownSeat : (session.ownSeat % 2 === 1 ? 1 : 2);
+          return item.originalTeam === myTeam && (item.originalOwnerSeat === session.ownSeat || !item.partnerRecoveryBlocked);
+        }) ? <Text style={styles.emptyFloor}>No captured builds are currently available for your team to recover.</Text> : null}
+        {session.recoverableBuilds.some((item) => {
+          const myTeam = session.gameMode === "two" ? session.ownSeat : (session.ownSeat % 2 === 1 ? 1 : 2);
+          return item.originalTeam === myTeam && item.originalOwnerSeat !== session.ownSeat && item.partnerRecoveryBlocked;
+        }) ? <Text style={styles.actionHint}>A matching-value draft has blocked partner recovery for a captured build. Its original owner may still recover it.</Text> : null}
+      </View>
+
+      <View style={styles.buildsPanel}>
         <Text style={styles.buildsHeading}>OPPONENT CAPTURED PILES · VISIBLE TOP CARDS</Text>
         {session.capturedPiles.filter((pile) => pile.count > 0 && (session.gameMode === "two" ? pile.seat !== session.ownSeat : (pile.seat % 2) !== (session.ownSeat % 2))).map((pile) => (
-          <Pressable key={pile.seat} disabled={!myTurn || busy || !captureBuildId || !pile.topCard} onPress={() => pile.topCard && setCapturePileIds((ids) => toggleId(ids, pile.topCard!.id))} style={[styles.opponent, pile.topCard && capturePileIds.includes(pile.topCard.id) && styles.selectedCard]}>
+          <Pressable key={pile.seat} disabled={!myTurn || busy || (!captureBuildId && !recoverBuildId) || !pile.topCard} onPress={() => pile.topCard && (recoverBuildId ? setRecoverPileIds((ids) => toggleId(ids, pile.topCard!.id)) : setCapturePileIds((ids) => toggleId(ids, pile.topCard!.id)))} style={[styles.opponent, pile.topCard && (capturePileIds.includes(pile.topCard.id) || recoverPileIds.includes(pile.topCard.id)) && styles.selectedCard]}>
             <Text style={styles.opponentName}>Seat {pile.seat} · {pile.count} captured</Text>
-            <Text style={styles.buildValue}>{pile.topCard ? cardLabel(pile.topCard) : "—"}{pile.topCard && capturePileIds.includes(pile.topCard.id) ? " · SELECTED" : ""}</Text>
+            <Text style={styles.buildValue}>{pile.topCard ? cardLabel(pile.topCard) : "—"}{pile.topCard && (capturePileIds.includes(pile.topCard.id) || recoverPileIds.includes(pile.topCard.id)) ? " · SELECTED" : ""}</Text>
           </Pressable>
         ))}
         {!session.capturedPiles.some((pile) => pile.count > 0 && (session.gameMode === "two" ? pile.seat !== session.ownSeat : (pile.seat % 2) !== (session.ownSeat % 2))) ? <Text style={styles.emptyFloor}>No opponent pile cards are available.</Text> : null}
@@ -127,16 +161,16 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
       <Text style={styles.section}>YOUR HAND · {session.ownHandCount} CARDS</Text>
       <View style={styles.hand}>
         {session.ownHand.map((card, index) => (
-          <Pressable key={card.id} onPress={() => buildMode ? setBuildHandIds((ids) => toggleId(ids, card.id)) : topUpBuildId ? setTopUpHandIds((ids) => toggleId(ids, card.id)) : captureBuildId ? setCaptureHandIds((ids) => toggleId(ids, card.id)) : setSelectedCardId(card.id)} disabled={!myTurn || busy} style={[styles.ownCard, (buildMode ? buildHandIds.includes(card.id) : topUpBuildId ? topUpHandIds.includes(card.id) : captureBuildId ? captureHandIds.includes(card.id) : selectedCardId === card.id) && styles.selectedCard]}>
+          <Pressable key={card.id} onPress={() => buildMode ? setBuildHandIds((ids) => toggleId(ids, card.id)) : topUpBuildId ? setTopUpHandIds((ids) => toggleId(ids, card.id)) : captureBuildId ? setCaptureHandIds((ids) => toggleId(ids, card.id)) : recoverBuildId ? setRecoverHandIds((ids) => toggleId(ids, card.id)) : setSelectedCardId(card.id)} disabled={!myTurn || busy} style={[styles.ownCard, (buildMode ? buildHandIds.includes(card.id) : topUpBuildId ? topUpHandIds.includes(card.id) : captureBuildId ? captureHandIds.includes(card.id) : recoverBuildId ? recoverHandIds.includes(card.id) : selectedCardId === card.id) && styles.selectedCard]}>
             <Text style={[styles.cardFace, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>
-            <Text style={styles.cardIndex}>{buildMode ? buildHandIds.includes(card.id) ? "BUILD" : index + 1 : topUpBuildId ? topUpHandIds.includes(card.id) ? "TOP UP" : index + 1 : captureBuildId ? captureHandIds.includes(card.id) ? "CAPTURE" : index + 1 : index + 1}</Text>
+            <Text style={styles.cardIndex}>{buildMode ? buildHandIds.includes(card.id) ? "BUILD" : index + 1 : topUpBuildId ? topUpHandIds.includes(card.id) ? "TOP UP" : index + 1 : captureBuildId ? captureHandIds.includes(card.id) ? "CAPTURE" : index + 1 : recoverBuildId ? recoverHandIds.includes(card.id) ? "RECOVER" : index + 1 : index + 1}</Text>
           </Pressable>
         ))}
       </View>
 
       {session.phase === "playing" ? (
         <View style={styles.actions}>
-          <Text style={styles.actionHint}>{!myTurn ? "Waiting for the current player." : buildMode ? "Select at least one card from your hand and any loose floor cards." : selectedCardId ? "Selected card is ready to draft." : "Select a card to draft, or start creating a build."}</Text>
+          <Text style={styles.actionHint}>{!myTurn ? "Waiting for the current player." : buildMode ? "Select at least one card from your hand and any loose floor cards." : recoverBuildId ? "Select a valid combination containing at least one card from your hand to recover the captured build." : selectedCardId ? "Selected card is ready to draft." : "Select a card to draft, or start creating a build."}</Text>
           {buildMode ? (
             <View style={styles.buildPanel}>
               <Text style={styles.buildTotal}>BUILD VALUE: {buildValue}</Text>
@@ -154,6 +188,15 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
               <View style={styles.actionRow}>
                 <Pressable onPress={() => onTopUp(topUpBuildId, topUpHandIds)} disabled={!myTurn || busy || topUpHandIds.length === 0 || !topUpBuild || topUpTotal !== topUpBuild.value} style={[styles.actionButton, (!myTurn || busy || topUpHandIds.length === 0 || !topUpBuild || topUpTotal !== topUpBuild.value) && styles.disabled]}><Text style={styles.actionText}>ADD TO BUILD</Text></Pressable>
                 <Pressable onPress={() => { setTopUpBuildId(null); setTopUpHandIds([]); }} disabled={busy} style={styles.endButton}><Text style={styles.actionText}>CANCEL</Text></Pressable>
+              </View>
+            </View>
+          ) : recoverBuildId ? (
+            <View style={styles.buildPanel}>
+              <Text style={styles.buildTotal}>RECOVER BUILD · VALUE {recoverBuild?.value ?? "Unavailable"}</Text>
+              <Text style={styles.actionHint}>Selected total: {recoverTotal}. Include at least one card from your hand. You may add eligible loose floor cards and visible opponent pile tops when an active build already exists.</Text>
+              <View style={styles.actionRow}>
+                <Pressable onPress={() => onRecoverBuild(recoverBuildId, { handCardIds: recoverHandIds, floorCardIds: recoverFloorIds, opponentPileCardIds: recoverPileIds })} disabled={!myTurn || busy || !recoverBuild || recoverHandIds.length === 0 || recoverTotal !== recoverBuild.value || session.floor.some((card) => card.rank === recoverBuild.value) || session.builds.some((build) => build.value === recoverBuild.value)} style={[styles.actionButton, (!myTurn || busy || !recoverBuild || recoverHandIds.length === 0 || recoverTotal !== recoverBuild.value || session.floor.some((card) => card.rank === recoverBuild.value) || session.builds.some((build) => build.value === recoverBuild.value)) && styles.disabled]}><Text style={styles.actionText}>CONFIRM RECOVERY</Text></Pressable>
+                <Pressable onPress={() => { setRecoverBuildId(null); setRecoverHandIds([]); setRecoverFloorIds([]); setRecoverPileIds([]); }} disabled={busy} style={styles.endButton}><Text style={styles.actionText}>CANCEL</Text></Pressable>
               </View>
             </View>
           ) : captureBuildId ? (
