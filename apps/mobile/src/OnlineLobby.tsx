@@ -76,11 +76,11 @@ export default function OnlineLobby() {
     finally { setBusy(false); }
   }
 
-  async function submitAction(action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose" | "shiya" | "request-build-transfer" | "approve-build-transfer" | "reject-build-transfer", cardId?: string, combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }, buildId?: string, targetCardId?: string) {
+  async function submitAction(action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose" | "recover-build" | "shiya" | "request-build-transfer" | "approve-build-transfer" | "reject-build-transfer", cardId?: string, combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] }, buildId?: string, targetCardId?: string, capturedBuildId?: string) {
     if (!room) return;
     setBusy(true); setError("");
     try {
-      setGameSession(await applyGameAction(room.room_id, action, cardId, combination, buildId, targetCardId));
+      setGameSession(await applyGameAction(room.room_id, action, cardId, combination, buildId, targetCardId, capturedBuildId));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not apply that move.");
       try { setGameSession(await getGameSession(room.room_id, "get")); } catch { /* Keep the original action error visible. */ }
@@ -101,7 +101,7 @@ export default function OnlineLobby() {
         <Text style={styles.kicker}>{gameSession ? "LIVE GAME" : room ? "WAITING LOBBY" : "THE TABLE IS YOURS"}</Text>
         <Text style={styles.hero}>{gameSession ? "Your game is underway." : room ? "Your table is ready." : "Every card has a purpose."}</Text>
         {room ? (gameSession ? (
-          <OnlineGame session={gameSession} room={room} busy={busy} onDraft={(cardId) => void submitAction("draft", cardId)} onEndTurn={() => void submitAction("end-turn")} onCreateBuild={(combination) => void submitAction("create-build", undefined, combination)} onTopUp={(buildId, handCardIds) => void submitAction("top-up-build", undefined, { handCardIds, floorCardIds: [], opponentPileCardIds: [] }, buildId)} onCaptureBuild={(buildId, selection) => void submitAction("capture-build", undefined, selection, buildId)} onCaptureLoose={(handCardId, floorCardId) => void submitAction("capture-loose", handCardId, undefined, undefined, floorCardId)} onShiya={(buildId) => void submitAction("shiya", undefined, undefined, buildId)} onRequestTransfer={(buildId) => void submitAction("request-build-transfer", undefined, undefined, buildId)} onApproveTransfer={(buildId) => void submitAction("approve-build-transfer", undefined, undefined, buildId)} onRejectTransfer={(buildId) => void submitAction("reject-build-transfer", undefined, undefined, buildId)} />
+          <OnlineGame session={gameSession} room={room} busy={busy} onDraft={(cardId) => void submitAction("draft", cardId)} onEndTurn={() => void submitAction("end-turn")} onCreateBuild={(combination) => void submitAction("create-build", undefined, combination)} onTopUp={(buildId, handCardIds) => void submitAction("top-up-build", undefined, { handCardIds, floorCardIds: [], opponentPileCardIds: [] }, buildId)} onCaptureBuild={(buildId, selection) => void submitAction("capture-build", undefined, selection, buildId)} onCaptureLoose={(handCardId, floorCardId) => void submitAction("capture-loose", handCardId, undefined, undefined, floorCardId)} onRecoverBuild={(capturedBuildId, selection) => void submitAction("recover-build", undefined, selection, undefined, undefined, capturedBuildId)} onShiya={(buildId) => void submitAction("shiya", undefined, undefined, buildId)} onRequestTransfer={(buildId) => void submitAction("request-build-transfer", undefined, undefined, buildId)} onApproveTransfer={(buildId) => void submitAction("approve-build-transfer", undefined, undefined, buildId)} onRejectTransfer={(buildId) => void submitAction("reject-build-transfer", undefined, undefined, buildId)} />
         ) : (
           <View style={styles.panel}>
             <Text style={styles.label}>{(room.visibility ?? "private").toUpperCase()} ROOM · {room.game_mode === "two" ? "TWO HANDS" : "FOUR HANDS"}</Text>
