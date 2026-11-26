@@ -1,4 +1,5 @@
-import { assertEquals, assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts";
+/// <reference lib="deno.ns" />
+import { assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { validateBuildIntegrity, validateCardLedger, type Card, type PlayerRow } from "./game-invariants.ts";
 
 const suits = ["♠", "♥", "♦", "♣"] as const;
