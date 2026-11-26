@@ -24,17 +24,35 @@ function client() {
 
 async function functionErrorDetails(error: unknown, scope: string, context: { roomId: string; action: string }): Promise<string> {
   const functionError = error as { message?: unknown; name?: unknown; context?: unknown; code?: unknown };
-  const response = functionError?.context;
-  let status: number | undefined;
+  const response = functionError?.context as {
+    status?: number;
+    clone?: () => { text?: () => Promise<string> };
+    text?: () => Promise<string>;
+  } | undefined;
+  let status: number | undefined = typeof response?.status === "number" ? response.status : undefined;
   let responseBody = "";
 
-  if (response instanceof Response) {
-    status = response.status;
+  // React Native's Response may come from a different polyfill, so avoid
+  // instanceof Response and inspect the response shape instead.
+  if (response && (typeof response.clone === "function" || typeof response.text === "function")) {
     try {
-      const raw = await response.clone().text();
-      responseBody = raw.slice(0, 8000);
+      const readable = typeof response.clone === "function" ? response.clone() : response;
+      if (typeof readable.text === "function") {
+        responseBody = (await readable.text()).slice(0, 8000);
+      }
     } catch (readError) {
       responseBody = "Could not read Edge Function response: " + String(readError);
+    }
+  }
+
+  let parsedMessage: string | undefined;
+  if (responseBody) {
+    try {
+      const parsed = JSON.parse(responseBody) as { error?: unknown; message?: unknown };
+      if (typeof parsed.error === "string") parsedMessage = parsed.error;
+      else if (typeof parsed.message === "string") parsedMessage = parsed.message;
+    } catch {
+      // Keep the raw response in the development log; use the SDK message below.
     }
   }
 
@@ -42,20 +60,11 @@ async function functionErrorDetails(error: unknown, scope: string, context: { ro
     ...context,
     httpStatus: status,
     errorCode: typeof functionError?.code === "string" ? functionError.code : undefined,
-    responseBody
+    responseBody: responseBody || "[No readable response body]",
+    serverMessage: parsedMessage
   });
 
-  if (responseBody) {
-    try {
-      const parsed = JSON.parse(responseBody) as { error?: unknown; message?: unknown };
-      if (typeof parsed.error === "string") return parsed.error;
-      if (typeof parsed.message === "string") return parsed.message;
-    } catch {
-      // Keep the raw response in the development log; use the SDK message below.
-    }
-  }
-
-  return typeof functionError?.message === "string" ? functionError.message : String(error);
+  return parsedMessage ?? (typeof functionError?.message === "string" ? functionError.message : String(error));
 }
 
 export async function createRoom(
