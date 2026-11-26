@@ -9,22 +9,22 @@ const checks = [
   {
     name: "Supabase Edge Function typecheck",
     command: "deno",
-    args: ["check", "supabase/functions/game-session/index.ts", "supabase/functions/game-action/index.ts"]
+    args: ["check", "apps/api/supabase/functions/game-session/index.ts", "apps/api/supabase/functions/game-action/index.ts"]
   },
   {
     name: "Shuffle and dealing tests",
     command: "deno",
-    args: ["test", "supabase/functions/_shared/shuffle-deal.test.ts"]
+    args: ["test", "apps/api/supabase/functions/_shared/shuffle-deal.test.ts"]
   },
   {
     name: "Game invariant and recovery tests",
     command: "deno",
-    args: ["test", "supabase/functions/_shared/game-invariants.test.ts"]
+    args: ["test", "apps/api/supabase/functions/_shared/game-invariants.test.ts"]
   },
   {
     name: "Gameplay rules regression tests",
     command: "deno",
-    args: ["test", "supabase/functions/_shared/rules-engine.test.ts"]
+    args: ["test", "apps/api/supabase/functions/_shared/rules-engine.test.ts"]
   }
 ];
 

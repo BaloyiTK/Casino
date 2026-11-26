@@ -20,17 +20,18 @@ jobs:
           cache-dependency-path: |
             package.json
             apps/mobile/package.json
+            apps/api/package.json
 
-      - name: Install web dependencies
+      - name: Install all workspace dependencies
         run: npm install --no-audit --no-fund
-
-      - name: Install mobile dependencies
-        run: npm install --no-audit --no-fund
-        working-directory: apps/mobile
 
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: Run all project checks and regression tests
         run: npm test

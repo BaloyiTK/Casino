@@ -8,11 +8,15 @@
     "start": "next start",
     "lint": "eslint app lib",
     "typecheck": "tsc --noEmit",
-    "mobile": "npm --prefix apps/mobile start",
-    "mobile:android": "npm --prefix apps/mobile run android",
-    "mobile:ios": "npm --prefix apps/mobile run ios",
-    "mobile:typecheck": "npm --prefix apps/mobile run typecheck",
-    "test": "node scripts/test-all.mjs"
+    "mobile": "npm run start --workspace @casino/mobile",
+    "mobile:android": "npm run android --workspace @casino/mobile",
+    "mobile:ios": "npm run ios --workspace @casino/mobile",
+    "mobile:typecheck": "npm run typecheck --workspace @casino/mobile",
+    "test": "node scripts/test-all.mjs",
+    "api:start": "npm run start --workspace @casino/api",
+    "api:stop": "npm run stop --workspace @casino/api",
+    "api:typecheck": "npm run typecheck --workspace @casino/api",
+    "api:test": "npm run test --workspace @casino/api"
   },
   "dependencies": {
     "next": "^15.5.6",
@@ -27,5 +31,9 @@
     "eslint-config-next": "^15.5.6",
     "typescript": "^5.9.2",
     "@tailwindcss/postcss": "^4.1.13"
-  }
+  },
+  "workspaces": [
+    "apps/mobile",
+    "apps/api"
+  ]
 }

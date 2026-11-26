@@ -1,0 +1,14 @@
+{
+  "name": "@casino/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "supabase start",
+    "stop": "supabase stop",
+    "functions:serve": "supabase functions serve",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "typecheck": "deno check supabase/functions/game-session/index.ts supabase/functions/game-action/index.ts",
+    "test": "deno test supabase/functions/_shared/shuffle-deal.test.ts supabase/functions/_shared/game-invariants.test.ts supabase/functions/_shared/rules-engine.test.ts"
+  }
+}
