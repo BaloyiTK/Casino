@@ -1,8 +1,33 @@
 import { useEffect, useState } from "react";
+import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, StyleSheet, Text, TextInput, View } from "react-native";
 import { applyGameAction, createRoom, getGameSession, getRoom, isSupabaseConfigured, joinRoom, listPublicRooms, watchRoom, type OnlineGameSession, type RoomSummary, type RoomVisibility } from "./rooms";
 import OnlineGame from "./OnlineGame";
 import type { GameMode } from "./game";
+
+const ACTIVE_ROOM_KEY = "casino.activeRoomId";
+
+async function readActiveRoomId(): Promise<string | null> {
+  if (Platform.OS === "web") return typeof localStorage !== "undefined" ? localStorage.getItem(ACTIVE_ROOM_KEY) : null;
+  return SecureStore.getItemAsync(ACTIVE_ROOM_KEY);
+}
+
+async function saveActiveRoomId(roomId: string): Promise<void> {
+  if (Platform.OS === "web") {
+    if (typeof localStorage !== "undefined") localStorage.setItem(ACTIVE_ROOM_KEY, roomId);
+    return;
+  }
+  await SecureStore.setItemAsync(ACTIVE_ROOM_KEY, roomId);
+}
+
+async function clearActiveRoomId(): Promise<void> {
+  if (Platform.OS === "web") {
+    if (typeof localStorage !== "undefined") localStorage.removeItem(ACTIVE_ROOM_KEY);
+    return;
+  }
+  await SecureStore.deleteItemAsync(ACTIVE_ROOM_KEY);
+}
 
 export default function OnlineLobby() {
   const [mode, setMode] = useState<GameMode>("two");
@@ -25,6 +50,30 @@ export default function OnlineLobby() {
     void refreshRooms();
     const refreshInterval = setInterval(() => { void refreshRooms(); }, 8000);
     return () => clearInterval(refreshInterval);
+  }, []);
+
+  // Restore the player's active room after app reload/restart. A playing room
+  // is rehydrated from the server so the current match and private hand return.
+  useEffect(() => {
+    let mounted = true;
+    const restore = async () => {
+      if (!isSupabaseConfigured) return;
+      try {
+        const roomId = await readActiveRoomId();
+        if (!roomId || !mounted) return;
+        const restoredRoom = await getRoom(roomId);
+        if (!mounted) return;
+        setRoom(restoredRoom);
+        if (restoredRoom.status === "playing") {
+          const restoredSession = await getGameSession(roomId, "get");
+          if (mounted) setGameSession(restoredSession);
+        }
+      } catch (e) {
+        if (mounted) setError(e instanceof Error ? e.message : "Could not restore your previous match.");
+      }
+    };
+    void restore();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -51,7 +100,7 @@ export default function OnlineLobby() {
 
   async function create() {
     setBusy(true); setError("");
-    try { setRoom(await createRoom(mode, visibility, displayName)); }
+    try { const created = await createRoom(mode, visibility, displayName); await saveActiveRoomId(created.room_id); setRoom(created); }
     catch (e) { setError(e instanceof Error ? e.message : "Could not create room."); }
     finally { setBusy(false); }
   }
@@ -60,6 +109,7 @@ export default function OnlineLobby() {
     setBusy(true); setError("");
     try {
       const result = await joinRoom(code, displayName);
+      await saveActiveRoomId(result.room_id);
       setRoom(await getRoom(result.room_id));
     } catch (e) { setError(e instanceof Error ? e.message : "Could not join room."); }
     finally { setBusy(false); }
@@ -121,7 +171,7 @@ export default function OnlineLobby() {
             {room.status === "waiting" && room.occupied_slots === room.max_players && room.players?.some((p) => p.is_host && p.is_me) ? (
               <Pressable onPress={() => void startGame()} disabled={busy} style={styles.primary}>{busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>SHUFFLE & DEAL</Text>}</Pressable>
             ) : null}
-            <Pressable onPress={() => { setRoom(null); setGameSession(null); setError(""); void refreshRooms(); }} style={styles.secondary}><Text style={styles.secondaryText}>BACK TO LOBBY</Text></Pressable>
+            <Pressable onPress={() => { void clearActiveRoomId(); setRoom(null); setGameSession(null); setError(""); void refreshRooms(); }} style={styles.secondary}><Text style={styles.secondaryText}>BACK TO LOBBY</Text></Pressable>
           </View>
         )) : (
           <>
