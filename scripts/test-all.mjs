@@ -12,6 +12,11 @@ const checks = [
     args: ["check", "supabase/functions/game-session/index.ts", "supabase/functions/game-action/index.ts"]
   },
   {
+    name: "Shuffle and dealing tests",
+    command: "deno",
+    args: ["test", "supabase/functions/_shared/shuffle-deal.test.ts"]
+  },
+  {
     name: "Game invariant and recovery tests",
     command: "deno",
     args: ["test", "supabase/functions/_shared/game-invariants.test.ts"]
