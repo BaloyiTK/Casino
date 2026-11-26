@@ -43,7 +43,7 @@ export default function OnlineLobby() {
 
   async function refreshRooms() {
     try { setPublicRooms(await listPublicRooms()); }
-    catch (e) { setError(e instanceof Error ? e.message : "Could not load public rooms."); }
+    catch (e) { logDevError("lobby.refresh-public-rooms", e); setError(e instanceof Error ? e.message : "Could not load public rooms."); }
   }
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function OnlineLobby() {
           const restoredSession = await getGameSession(roomId, "get");
           if (mounted) setGameSession(restoredSession);
         }
-      } catch (e) {
+      } catch (e) { logDevError("lobby.restore-room", e);
         if (mounted) setError(e instanceof Error ? e.message : "Could not restore your previous match.");
       }
     };
@@ -89,7 +89,7 @@ export default function OnlineLobby() {
           const session = await getGameSession(room.room_id, "get");
           if (mounted) setGameSession(session);
         }
-      } catch (e) {
+      } catch (e) { logDevError("lobby.refresh-room", e);
         if (mounted) setError(e instanceof Error ? e.message : "Could not refresh room.");
       }
     };
@@ -102,7 +102,7 @@ export default function OnlineLobby() {
   async function create() {
     setBusy(true); setError("");
     try { const created = await createRoom(mode, visibility, displayName); await saveActiveRoomId(created.room_id); setRoom(created); }
-    catch (e) { setError(e instanceof Error ? e.message : "Could not create room."); }
+    catch (e) { logDevError("lobby.create-room", e); setError(e instanceof Error ? e.message : "Could not create room."); }
     finally { setBusy(false); }
   }
 
@@ -112,7 +112,7 @@ export default function OnlineLobby() {
       const result = await joinRoom(code, displayName);
       await saveActiveRoomId(result.room_id);
       setRoom(await getRoom(result.room_id));
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not join room."); }
+    } catch (e) { logDevError("lobby.join-room", e); setError(e instanceof Error ? e.message : "Could not join room."); }
     finally { setBusy(false); }
   }
 
@@ -122,7 +122,7 @@ export default function OnlineLobby() {
       const result = await joinPublicRoom(roomId, displayName);
       await saveActiveRoomId(result.room_id);
       setRoom(await getRoom(result.room_id));
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not join that public slot."); }
+    } catch (e) { logDevError("lobby.join-public-room", e); setError(e instanceof Error ? e.message : "Could not join that public slot."); }
     finally { setBusy(false); }
   }
 
@@ -133,7 +133,7 @@ export default function OnlineLobby() {
       const session = await getGameSession(room.room_id, "start");
       setGameSession(session);
       setRoom(await getRoom(room.room_id));
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not start the game."); }
+    } catch (e) { logDevError("lobby.start-game", e); setError(e instanceof Error ? e.message : "Could not start the game."); }
     finally { setBusy(false); }
   }
 
@@ -142,7 +142,7 @@ export default function OnlineLobby() {
     setBusy(true); setError("");
     try {
       setGameSession(await applyGameAction(room.room_id, action, cardId, combination, buildId, targetCardId, capturedBuildId));
-    } catch (e) {
+    } catch (e) { logDevError("lobby.submit-game-action", e);
       setError(e instanceof Error ? e.message : "Could not apply that move.");
       try { setGameSession(await getGameSession(room.room_id, "get")); } catch { /* Keep the original action error visible. */ }
     } finally {
@@ -154,7 +154,7 @@ export default function OnlineLobby() {
     if (!room) return;
     try {
       await Share.share({ message: "Join my Casino game. Room code: " + room.room_code });
-    } catch (e) {
+    } catch (e) { logDevError("lobby.async-operation", e);
       logDevError("lobby.share-room", e, { roomId: room.room_id });
       setError(e instanceof Error ? e.message : "Could not share the room invite.");
     }
