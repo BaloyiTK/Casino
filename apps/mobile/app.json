@@ -3,7 +3,7 @@
     "name": "Casino",
     "slug": "casino-card-game",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "landscape",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
