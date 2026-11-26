@@ -33,7 +33,7 @@ export async function createRoom(
     p_visibility: visibility,
     p_display_name: displayName.trim()
   });
-  if (error) throw new Error(error.message);
+  if (error) { logDevError("room.create", error); throw new Error(error.message); }
   return data as RoomSummary;
 }
 
@@ -43,7 +43,7 @@ export async function joinRoom(code: string, displayName: string): Promise<RoomS
     p_room_code: code.trim().toUpperCase(),
     p_display_name: displayName.trim()
   });
-  if (error) throw new Error(error.message);
+  if (error) { logDevError("room.join", error); throw new Error(error.message); }
   return data as RoomSummary;
 }
 
@@ -53,14 +53,14 @@ export async function joinPublicRoom(roomId: string, displayName: string): Promi
     p_room_id: roomId,
     p_display_name: displayName.trim()
   });
-  if (error) throw new Error(error.message);
+  if (error) { logDevError("room.join-public", error, { roomId }); throw new Error(error.message); }
   return data as RoomSummary;
 }
 
 export async function listPublicRooms(): Promise<RoomSummary[]> {
   await requireSupabaseSession();
   const { data, error } = await client().rpc("casino_list_public_rooms");
-  if (error) throw new Error(error.message);
+  if (error) { logDevError("room.list-public", error); throw new Error(error.message); }
   return (data ?? []) as RoomSummary[];
 }
 
@@ -91,7 +91,7 @@ export async function getRoom(roomId: string): Promise<RoomSummary> {
   const { data, error } = await client().rpc("casino_get_room", {
     p_room_id: roomId
   });
-  if (error) throw new Error(error.message);
+  if (error) { logDevError("room.get", error, { roomId }); throw new Error(error.message); }
   return data as RoomSummary;
 }
 
