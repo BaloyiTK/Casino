@@ -101,6 +101,8 @@ export interface OnlineGameSession {
   round: number;
   currentSeat: number;
   phase: string;
+  message?: string;
+  forfeit?: { forfeitingSeat: number; winningTeam?: number; losingTeam?: number; winningSeat?: number };
   ownSeat: number;
   ownHand: Array<{ id: string; suit: string; rank: number }>;
   ownHandCount: number;
@@ -132,7 +134,7 @@ export async function getGameSession(
 
 export async function applyGameAction(
   roomId: string,
-  action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose" | "recover-build" | "shiya" | "request-build-transfer" | "approve-build-transfer" | "reject-build-transfer",
+  action: "draft" | "end-turn" | "create-build" | "top-up-build" | "capture-build" | "capture-loose" | "recover-build" | "shiya" | "request-build-transfer" | "approve-build-transfer" | "reject-build-transfer" | "forfeit",
   cardId?: string,
   combination?: { handCardIds: string[]; floorCardIds: string[]; opponentPileCardIds: string[] },
   buildId?: string,
