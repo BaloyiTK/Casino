@@ -58,7 +58,7 @@ Deno.serve(async (request: Request) => {
     const roomId = typeof body.roomId === "string" ? body.roomId : "";
     const action = body.action;
     if (!roomId) throw new Error("A room ID is required.");
-    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build" && action !== "capture-loose" && action !== "shiya" && action !== "request-build-transfer" && action !== "approve-build-transfer" && action !== "reject-build-transfer") throw new Error("Unsupported game action.");
+    if (action !== "draft" && action !== "end-turn" && action !== "create-build" && action !== "top-up-build" && action !== "capture-build" && action !== "capture-loose" && action !== "recover-build" && action !== "shiya" && action !== "request-build-transfer" && action !== "approve-build-transfer" && action !== "reject-build-transfer") throw new Error("Unsupported game action.");
 
     const { data: room, error: roomError } = await admin
       .from("casino_rooms").select("id, game_mode").eq("id", roomId).maybeSingle();
@@ -141,6 +141,13 @@ Deno.serve(async (request: Request) => {
       if (index < 0) throw new Error("That card is not in your hand.");
       const [card] = ownHand.splice(index, 1);
       (state.floor as Card[]).push(card);
+      const recoverableBuilds = (state.recoverableBuilds ?? []) as Array<{ originalOwnerSeat: number; value: number; status: string; partnerRecoveryBlocked: boolean }>;
+      for (const capturedBuild of recoverableBuilds) {
+        if (capturedBuild.status === "captured" && capturedBuild.originalOwnerSeat === player.seat && capturedBuild.value === card.rank) {
+          capturedBuild.partnerRecoveryBlocked = true;
+        }
+      }
+      state.recoverableBuilds = recoverableBuilds;
       state.message = `Seat ${player.seat} drafted a card.`;
     } else if (action === "create-build") {
       const handCardIds: string[] = Array.isArray(body.handCardIds) ? body.handCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
@@ -216,6 +223,74 @@ Deno.serve(async (request: Request) => {
         cards: [...selectedHand, ...selectedFloor, ...selectedOpponentPile]
       });
       state.message = `Seat ${player.seat} created a build worth ${value}.`;
+    } else if (action === "recover-build") {
+      const capturedBuildId = typeof body.capturedBuildId === "string" ? body.capturedBuildId : "";
+      const handCardIds: string[] = Array.isArray(body.handCardIds) ? body.handCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
+      const floorCardIds: string[] = Array.isArray(body.floorCardIds) ? body.floorCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
+      const opponentPileCardIds: string[] = Array.isArray(body.opponentPileCardIds) ? body.opponentPileCardIds.filter((id: unknown): id is string => typeof id === "string") : [];
+      const selectedIds = [...handCardIds, ...floorCardIds, ...opponentPileCardIds];
+      if (!capturedBuildId || handCardIds.length === 0 || selectedIds.length !== new Set(selectedIds).size) {
+        throw new Error("Recovery needs a captured build and a unique combination containing at least one card from your hand.");
+      }
+      const recoverableBuilds = (state.recoverableBuilds ?? []) as Array<{ id: string; value: number; originalOwnerSeat: number; originalTeam: number; status: string; partnerRecoveryBlocked: boolean }>;
+      const capturedBuild = recoverableBuilds.find((item) => item.id === capturedBuildId && item.status === "captured");
+      if (!capturedBuild) throw new Error("That captured build is no longer available to recover.");
+      const playerTeam = players.length === 2 ? player.seat : (player.seat % 2 === 1 ? 1 : 2);
+      if (capturedBuild.originalTeam !== playerTeam) throw new Error("Only a member of the original team may recover this build.");
+      if (capturedBuild.originalOwnerSeat !== player.seat && capturedBuild.partnerRecoveryBlocked) {
+        throw new Error("The original owner drafted a card of this value. Their partner can no longer recover this captured build.");
+      }
+      const builds = state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>;
+      const floor = state.floor as Card[];
+      if (builds.some((build) => build.ownerSeat === player.seat)) throw new Error("You already own an active build.");
+      const selectedHand = handCardIds.map((id) => {
+        const card = ownHand.find((item) => item.id === id);
+        if (!card) throw new Error("A selected recovery card is not in your hand.");
+        return card;
+      });
+      const selectedFloor = floorCardIds.map((id) => {
+        const card = floor.find((item) => item.id === id);
+        if (!card) throw new Error("A selected floor card is not loose or available.");
+        return card;
+      });
+      const capturedPiles = state.capturedPiles as Record<string, Card[]>;
+      if (opponentPileCardIds.length > 0 && builds.length === 0) {
+        throw new Error("Opponent captured-pile cards may only be used when an active build already exists.");
+      }
+      const selectedOpponentPile: Card[] = [];
+      for (const id of opponentPileCardIds) {
+        let found: Card | undefined;
+        for (const [seatText, pile] of Object.entries(capturedPiles)) {
+          const pileSeat = Number(seatText);
+          const isOpponent = players.length === 2 ? pileSeat !== player.seat : (pileSeat % 2) !== (player.seat % 2);
+          const top = pile[pile.length - 1];
+          if (isOpponent && top?.id === id) { found = top; break; }
+        }
+        if (!found) throw new Error("Only the visible top card of an opponent's captured pile may be used.");
+        selectedOpponentPile.push(found);
+      }
+      const value = [...selectedHand, ...selectedFloor, ...selectedOpponentPile].reduce((sum, card) => sum + card.rank, 0);
+      if (value !== capturedBuild.value) throw new Error(`The recovery combination must total exactly ${capturedBuild.value}.`);
+      if (floor.some((card) => card.rank === value)) throw new Error("A loose floor card already represents that value.");
+      if (builds.some((build) => build.value === value)) throw new Error("An active build already has that value.");
+      for (const id of handCardIds) ownHand.splice(ownHand.findIndex((card) => card.id === id), 1);
+      for (const id of floorCardIds) floor.splice(floor.findIndex((card) => card.id === id), 1);
+      for (const id of opponentPileCardIds) {
+        const pile = Object.values(capturedPiles).find((cards) => cards[cards.length - 1]?.id === id);
+        if (!pile) throw new Error("An opponent pile changed while recovering the build.");
+        pile.pop();
+      }
+      builds.push({
+        id: crypto.randomUUID(),
+        value,
+        ownerSeat: player.seat,
+        team: playerTeam,
+        cards: [...selectedHand, ...selectedFloor, ...selectedOpponentPile]
+      });
+      capturedBuild.status = "recovered";
+      capturedBuild.recoveredBySeat = player.seat;
+      state.recoverableBuilds = recoverableBuilds;
+      state.message = `Seat ${player.seat} recovered a new build worth ${value}. The original captured cards remain captured.`;
     } else if (action === "shiya") {
       if (players.length !== 4) throw new Error("Shiya is only available in Four Hands.");
       const buildId = typeof body.buildId === "string" ? body.buildId : "";
@@ -300,6 +375,17 @@ Deno.serve(async (request: Request) => {
       }
       const [capturedBuild] = builds.splice(buildIndex, 1);
       capturedPiles[String(player.seat)].push(...capturedBuild.cards, ...selectedHand, ...selectedFloor, ...selectedOpponentPile);
+      const recoverableBuilds = (state.recoverableBuilds ?? []) as Array<Record<string, unknown>>;
+      recoverableBuilds.push({
+        id: crypto.randomUUID(),
+        value: capturedBuild.value,
+        originalOwnerSeat: capturedBuild.ownerSeat,
+        originalTeam: capturedBuild.team,
+        capturedBySeat: player.seat,
+        status: "captured",
+        partnerRecoveryBlocked: false
+      });
+      state.recoverableBuilds = recoverableBuilds;
       state.lastCapturerSeat = player.seat;
       if (state.shiyaPending) {
         const pending = state.shiyaPending as { seat: number; team: number; buildIds: string[] };
@@ -422,6 +508,7 @@ Deno.serve(async (request: Request) => {
       floor: latestFloor,
       builds: (state.builds as Array<{ id: string; value: number; ownerSeat: number; team: number; cards: Card[] }>).map((build) => ({ id: build.id, value: build.value, ownerSeat: build.ownerSeat, team: build.team, cards: build.cards })),
       ownershipRequests: state.ownershipRequests ?? [],
+      recoverableBuilds: (state.recoverableBuilds ?? []).filter((item: Record<string, unknown>) => item.status === "captured"),
       capturedPiles: Object.entries(state.capturedPiles as Record<string, Card[]>).map(([seat, pile]) => ({ seat: Number(seat), count: pile.length, topCard: pile.length ? pile[pile.length - 1] : null })),
       deckCount: latestDeck.length
     };
