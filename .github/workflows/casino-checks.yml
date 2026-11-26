@@ -29,9 +29,5 @@ jobs:
         with:
           deno-version: v2.x
 
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
       - name: Run all project checks and regression tests
         run: npm test
