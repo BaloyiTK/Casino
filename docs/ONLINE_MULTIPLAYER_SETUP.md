@@ -12,7 +12,7 @@ In Supabase Dashboard, open **Authentication → Sign In / Providers** and enabl
 
 ## 3. Apply all database migrations
 
-Run all SQL migration files in `supabase/migrations/` in filename order using the Supabase SQL Editor:
+Run all SQL migration files in `apps/api/supabase/migrations/` in filename order using the Supabase SQL Editor:
 
 1. `20261125000100_online_rooms.sql`
 2. `20261125000200_room_snapshot.sql`
@@ -23,7 +23,7 @@ Run all SQL migration files in `supabase/migrations/` in filename order using th
 7. `20261125000700_server_game_actions.sql`
 8. `20261125000800_partner_transfer_actions.sql`
 
-Alternatively, install the Supabase CLI, link this repository to your project, and run `supabase db push`.
+Alternatively, install the Supabase CLI, then run `supabase link --project-ref YOUR_PROJECT_REF` and `supabase db push` from `apps/api/`.
 
 ## 4. Configure the Expo app
 
@@ -38,9 +38,10 @@ Do not commit `.env` or service-role keys. The mobile app must only use the publ
 
 ## 5. Deploy the server game function
 
-Deploy the Edge Function from the repository root:
+Deploy the Edge Functions from `apps/api/`:
 
 ```bash
+cd apps/api
 supabase functions deploy game-session
 supabase functions deploy game-action
 ```
