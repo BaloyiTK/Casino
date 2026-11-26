@@ -23,6 +23,32 @@ function cardLabel(card: { rank: number; suit: string }) {
   return `${card.rank === 1 ? "A" : card.rank}${card.suit}`;
 }
 
+
+function PlayingCardFace({ rank, suit, compact = false }: { rank: number; suit: string; compact?: boolean }) {
+  const symbol = suit === "H" || suit === "hearts" ? "♥" : suit === "D" || suit === "diamonds" ? "♦" : suit === "S" || suit === "spades" ? "♠" : suit === "C" || suit === "clubs" ? "♣" : suit;
+  const redSuit = symbol === "♥" || symbol === "♦";
+  const value = rank === 1 ? "A" : String(rank);
+  return (
+    <View style={[styles.cardFaceInner, compact && styles.cardFaceCompact]}>
+      <View style={styles.cardCorner}>
+        <Text style={[styles.cardCornerRank, redSuit && styles.red]}>{value}</Text>
+        <Text style={[styles.cardCornerSuit, redSuit && styles.red]}>{symbol}</Text>
+      </View>
+      <View style={[styles.cardPips, compact && styles.cardPipsCompact]}>
+        {rank === 1 ? (
+          <Text style={[styles.cardAcePip, redSuit && styles.red]}>{symbol}</Text>
+        ) : Array.from({ length: rank }, (_, index) => (
+          <Text key={index} style={[styles.cardPip, redSuit && styles.red, compact && styles.cardPipCompact]}>{symbol}</Text>
+        ))}
+      </View>
+      <View style={[styles.cardCorner, styles.cardCornerBottom]}>
+        <Text style={[styles.cardCornerRank, redSuit && styles.red]}>{value}</Text>
+        <Text style={[styles.cardCornerSuit, redSuit && styles.red]}>{symbol}</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose, onRecoverBuild, onShiya, onRequestTransfer, onApproveTransfer, onRejectTransfer }: Props) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [buildMode, setBuildMode] = useState(false);
@@ -73,7 +99,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
           <View style={styles.cardGrid}>
             {session.floor.map((card) => (
               <Pressable key={card.id} disabled={!myTurn || busy || (!buildMode && !captureBuildId && !recoverBuildId && (!selectedHandCard || selectedHandCard.rank !== card.rank))} onPress={() => captureBuildId ? setCaptureFloorIds((ids) => toggleId(ids, card.id)) : recoverBuildId ? setRecoverFloorIds((ids) => toggleId(ids, card.id)) : buildMode ? setBuildFloorIds((ids) => toggleId(ids, card.id)) : selectedCardId ? onCaptureLoose(selectedCardId, card.id) : undefined} style={[styles.floorCard, (buildFloorIds.includes(card.id) || captureFloorIds.includes(card.id) || recoverFloorIds.includes(card.id)) && styles.selectedCard]}>
-                <Text style={[styles.cardFace, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>
+                <PlayingCardFace rank={card.rank} suit={card.suit} compact />
                 {buildMode || captureBuildId || recoverBuildId ? <Text style={styles.cardIndex}>{captureBuildId ? captureFloorIds.includes(card.id) ? "CAPTURE" : "ADD" : recoverBuildId ? recoverFloorIds.includes(card.id) ? "RECOVER" : "ADD" : buildFloorIds.includes(card.id) ? "SELECTED" : "ADD"}</Text> : selectedHandCard?.rank === card.rank ? <Text style={styles.cardIndex}>MATCH · CAPTURE</Text> : null}
               </Pressable>
             ))}
@@ -114,7 +140,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
             </View>
             {!(session.gameMode === "four" && build.ownerSeat !== session.ownSeat && build.team === (session.ownSeat % 2 === 1 ? 1 : 2)) ? <Pressable disabled={!myTurn || busy} onPress={() => { setBuildMode(false); setTopUpBuildId(null); setCaptureBuildId(build.id); setCaptureHandIds([]); setCaptureFloorIds([]); setCapturePileIds([]); setSelectedCardId(null); }} style={styles.topUpButton}><Text style={styles.topUpButtonText}>CAPTURE BUILD</Text></Pressable> : null}
             <View style={styles.buildCards}>
-              {build.cards.map((card) => <Text key={card.id} style={[styles.buildCard, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>)}
+              {build.cards.map((card) => <View key={card.id} style={styles.buildCard}><PlayingCardFace rank={card.rank} suit={card.suit} compact /></View>)}
             </View>
           </View>
         )) : <Text style={styles.emptyFloor}>No active builds.</Text>}
@@ -152,7 +178,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
         {session.capturedPiles.filter((pile) => pile.count > 0 && (session.gameMode === "two" ? pile.seat !== session.ownSeat : (pile.seat % 2) !== (session.ownSeat % 2))).map((pile) => (
           <Pressable key={pile.seat} disabled={!myTurn || busy || (!captureBuildId && !recoverBuildId) || !pile.topCard} onPress={() => pile.topCard && (recoverBuildId ? setRecoverPileIds((ids) => toggleId(ids, pile.topCard!.id)) : setCapturePileIds((ids) => toggleId(ids, pile.topCard!.id)))} style={[styles.opponent, pile.topCard && (capturePileIds.includes(pile.topCard.id) || recoverPileIds.includes(pile.topCard.id)) && styles.selectedCard]}>
             <Text style={styles.opponentName}>Seat {pile.seat} · {pile.count} captured</Text>
-            <Text style={styles.buildValue}>{pile.topCard ? cardLabel(pile.topCard) : "—"}{pile.topCard && (capturePileIds.includes(pile.topCard.id) || recoverPileIds.includes(pile.topCard.id)) ? " · SELECTED" : ""}</Text>
+            <View style={styles.pileCardPreview}>{pile.topCard ? <PlayingCardFace rank={pile.topCard.rank} suit={pile.topCard.suit} compact /> : <Text>—</Text>}{pile.topCard && (capturePileIds.includes(pile.topCard.id) || recoverPileIds.includes(pile.topCard.id)) ? <Text style={styles.actionHint}>SELECTED</Text> : null}</View>
           </Pressable>
         ))}
         {!session.capturedPiles.some((pile) => pile.count > 0 && (session.gameMode === "two" ? pile.seat !== session.ownSeat : (pile.seat % 2) !== (session.ownSeat % 2))) ? <Text style={styles.emptyFloor}>No opponent pile cards are available.</Text> : null}
@@ -162,7 +188,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
       <View style={styles.hand}>
         {session.ownHand.map((card, index) => (
           <Pressable key={card.id} onPress={() => buildMode ? setBuildHandIds((ids) => toggleId(ids, card.id)) : topUpBuildId ? setTopUpHandIds((ids) => toggleId(ids, card.id)) : captureBuildId ? setCaptureHandIds((ids) => toggleId(ids, card.id)) : recoverBuildId ? setRecoverHandIds((ids) => toggleId(ids, card.id)) : setSelectedCardId(card.id)} disabled={!myTurn || busy} style={[styles.ownCard, (buildMode ? buildHandIds.includes(card.id) : topUpBuildId ? topUpHandIds.includes(card.id) : captureBuildId ? captureHandIds.includes(card.id) : recoverBuildId ? recoverHandIds.includes(card.id) : selectedCardId === card.id) && styles.selectedCard]}>
-            <Text style={[styles.cardFace, (card.suit === "♥" || card.suit === "♦") && styles.red]}>{cardLabel(card)}</Text>
+            <PlayingCardFace rank={card.rank} suit={card.suit} compact />
             <Text style={styles.cardIndex}>{buildMode ? buildHandIds.includes(card.id) ? "BUILD" : index + 1 : topUpBuildId ? topUpHandIds.includes(card.id) ? "TOP UP" : index + 1 : captureBuildId ? captureHandIds.includes(card.id) ? "CAPTURE" : index + 1 : recoverBuildId ? recoverHandIds.includes(card.id) ? "RECOVER" : index + 1 : index + 1}</Text>
           </Pressable>
         ))}
@@ -258,7 +284,7 @@ const styles = StyleSheet.create({
   tableLabel: { color: "#d6c59e", fontSize: 9, fontWeight: "800", letterSpacing: 1.3 },
   emptyFloor: { color: "#c5d2c8", textAlign: "center", marginTop: 35, fontSize: 12 },
   cardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 16 },
-  floorCard: { backgroundColor: "#fffefa", borderRadius: 5, width: 42, height: 58, alignItems: "center", justifyContent: "center" },
+  floorCard: { backgroundColor: "#fffefa", borderRadius: 6, width: 56, height: 82, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#d8d8cf", padding: 3 },
   buildsPanel: { backgroundColor: "#fbfaf6", borderWidth: 1, borderColor: "#dedfd5", padding: 14, marginBottom: 20 },
   buildsHeading: { color: "#8d7955", fontSize: 9, fontWeight: "800", letterSpacing: 1.2 },
   buildRow: { borderTopWidth: 1, borderColor: "#e5e4db", paddingVertical: 11, marginTop: 10 },
@@ -267,10 +293,11 @@ const styles = StyleSheet.create({
   topUpButton: { backgroundColor: "#e9ede5", borderWidth: 1, borderColor: "#b9c8b8", paddingHorizontal: 9, paddingVertical: 7, marginTop: 8, alignSelf: "flex-start" },
   topUpButtonText: { color: "#245b43", fontSize: 8, fontWeight: "800", letterSpacing: 0.5 },
   buildCards: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 8 },
-  buildCard: { color: "#1b2a22", backgroundColor: "#f0f0e8", paddingHorizontal: 8, paddingVertical: 5, fontSize: 12, fontWeight: "800" },
+  buildCard: { backgroundColor: "#fffefa", width: 43, height: 62, borderWidth: 1, borderColor: "#d8d8cf", borderRadius: 4, padding: 2 },
+  pileCardPreview: { alignItems: "center", gap: 4 },
   section: { color: "#8d7955", fontSize: 10, fontWeight: "800", letterSpacing: 1.5, marginBottom: 11, marginTop: 5 },
   hand: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 },
-  ownCard: { backgroundColor: "#fffefa", borderWidth: 1, borderColor: "#d9d9cf", borderRadius: 5, width: 55, height: 78, alignItems: "center", justifyContent: "center" },
+  ownCard: { backgroundColor: "#fffefa", borderWidth: 1, borderColor: "#d9d9cf", borderRadius: 7, width: 66, height: 96, alignItems: "center", justifyContent: "center", padding: 3 },
   selectedCard: { borderColor: "#b28b45", borderWidth: 2, transform: [{ translateY: -4 }] },
   buildPanel: { marginTop: 10, padding: 12, backgroundColor: "#f0f4ed", borderWidth: 1, borderColor: "#cbd7c9" },
   buildTotal: { color: "#174c39", fontSize: 18, fontWeight: "800", marginBottom: 5 },
@@ -281,7 +308,17 @@ const styles = StyleSheet.create({
   endButton: { flex: 1, backgroundColor: "#9a8050", padding: 13, alignItems: "center", justifyContent: "center", minHeight: 45 },
   actionText: { color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
   disabled: { opacity: 0.4 },
-  cardFace: { color: "#1b2a22", fontSize: 18, fontWeight: "800" },
+  cardFaceInner: { flex: 1, width: "100%", justifyContent: "space-between", alignItems: "center" },
+  cardFaceCompact: { padding: 1 },
+  cardCorner: { alignSelf: "flex-start", alignItems: "center", minWidth: 13 },
+  cardCornerBottom: { alignSelf: "flex-end", transform: [{ rotate: "180deg" }] },
+  cardCornerRank: { color: "#1b2a22", fontSize: 11, lineHeight: 12, fontWeight: "900" },
+  cardCornerSuit: { color: "#1b2a22", fontSize: 9, lineHeight: 10, fontWeight: "800" },
+  cardPips: { flex: 1, width: "100%", flexDirection: "row", flexWrap: "wrap", alignContent: "center", alignItems: "center", justifyContent: "center" },
+  cardPipsCompact: { alignContent: "center" },
+  cardPip: { width: "50%", textAlign: "center", fontSize: 13, lineHeight: 15, fontWeight: "700" },
+  cardPipCompact: { fontSize: 9, lineHeight: 10 },
+  cardAcePip: { fontSize: 30, fontWeight: "700" },
   red: { color: "#b43b3b" },
   cardIndex: { color: "#a0a69e", fontSize: 8, marginTop: 7 },
   opponent: { backgroundColor: "#fbfaf6", borderWidth: 1, borderColor: "#dedfd5", padding: 13, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
