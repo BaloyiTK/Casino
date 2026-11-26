@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { OnlineGameSession, RoomSummary } from "./rooms";
 
 type Props = {
@@ -73,8 +73,65 @@ function PlayingCardFace({ rank, suit, compact = false }: { rank: number; suit: 
   );
 }
 
+
+function DraggableHandCard({
+  rank,
+  suit,
+  disabled,
+  onTap,
+  onDrop
+}: {
+  rank: number;
+  suit: string;
+  disabled: boolean;
+  onTap: () => void;
+  onDrop: (x: number, y: number) => void;
+}) {
+  const position = useRef(new Animated.ValueXY()).current;
+  const handlers = useRef({ disabled, onTap, onDrop });
+  handlers.current = { disabled, onTap, onDrop };
+  const panResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => !handlers.current.disabled,
+    onMoveShouldSetPanResponder: (_event, gesture) =>
+      !handlers.current.disabled && (Math.abs(gesture.dx) > 3 || Math.abs(gesture.dy) > 3),
+    onPanResponderGrant: () => position.setOffset({ x: 0, y: 0 }),
+    onPanResponderMove: (_event, gesture) => position.setValue({ x: gesture.dx, y: gesture.dy }),
+    onPanResponderRelease: (_event, gesture) => {
+      position.flattenOffset();
+      const moved = Math.abs(gesture.dx) > 18 || Math.abs(gesture.dy) > 18;
+      if (moved) handlers.current.onDrop(gesture.moveX, gesture.moveY);
+      else handlers.current.onTap();
+      Animated.spring(position, {
+        toValue: { x: 0, y: 0 },
+        useNativeDriver: true,
+        speed: 22,
+        bounciness: 7
+      }).start();
+    },
+    onPanResponderTerminate: () => {
+      position.flattenOffset();
+      Animated.spring(position, { toValue: { x: 0, y: 0 }, useNativeDriver: true }).start();
+    }
+  })).current;
+
+  return (
+    <Animated.View
+      {...panResponder.panHandlers}
+      style={[
+        styles.ownCard,
+        styles.draggableCard,
+        disabled && styles.disabled,
+        { transform: [{ translateX: position.x }, { translateY: position.y }, { scale: 1.04 }] }
+      ]}
+    >
+      <PlayingCardFace rank={rank} suit={suit} />
+    </Animated.View>
+  );
+}
+
 export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, onCreateBuild, onTopUp, onCaptureBuild, onCaptureLoose, onRecoverBuild, onShiya, onRequestTransfer, onApproveTransfer, onRejectTransfer, onForfeit }: Props) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const tableRef = useRef<View>(null);
   const [buildMode, setBuildMode] = useState(false);
   const [buildHandIds, setBuildHandIds] = useState<string[]>([]);
   const [buildFloorIds, setBuildFloorIds] = useState<string[]>([]);
@@ -115,7 +172,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
         {session.message ? <Text style={styles.resultMessage}>{session.message}</Text> : null}
       </View>
 
-      <View style={styles.table}>
+      <View ref={tableRef} collapsable={false} style={styles.table}>
         <View style={styles.tableHeader}>
           <Text style={styles.tableLabel}>THE FLOOR</Text>
           <Text style={styles.tableLabel}>{session.floor.length} CARDS</Text>
@@ -211,16 +268,40 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
 
       <Text style={styles.section}>YOUR HAND · {session.ownHandCount} CARDS</Text>
       <View style={styles.hand}>
-        {session.ownHand.map((card) => (
-          <Pressable key={card.id} onPress={() => buildMode ? setBuildHandIds((ids) => toggleId(ids, card.id)) : topUpBuildId ? setTopUpHandIds((ids) => toggleId(ids, card.id)) : captureBuildId ? setCaptureHandIds((ids) => toggleId(ids, card.id)) : recoverBuildId ? setRecoverHandIds((ids) => toggleId(ids, card.id)) : setSelectedCardId(card.id)} disabled={!myTurn || busy} style={[styles.ownCard, (buildMode ? buildHandIds.includes(card.id) : topUpBuildId ? topUpHandIds.includes(card.id) : captureBuildId ? captureHandIds.includes(card.id) : recoverBuildId ? recoverHandIds.includes(card.id) : selectedCardId === card.id) && styles.selectedCard]}>
-            <PlayingCardFace rank={card.rank} suit={card.suit} />
-          </Pressable>
-        ))}
+        {session.ownHand.map((card) => {
+          const specialSelectionMode = buildMode || Boolean(topUpBuildId) || Boolean(captureBuildId) || Boolean(recoverBuildId);
+          const selected = buildMode ? buildHandIds.includes(card.id) : topUpBuildId ? topUpHandIds.includes(card.id) : captureBuildId ? captureHandIds.includes(card.id) : recoverBuildId ? recoverHandIds.includes(card.id) : selectedCardId === card.id;
+          if (specialSelectionMode) {
+            return (
+              <Pressable key={card.id} onPress={() => buildMode ? setBuildHandIds((ids) => toggleId(ids, card.id)) : topUpBuildId ? setTopUpHandIds((ids) => toggleId(ids, card.id)) : captureBuildId ? setCaptureHandIds((ids) => toggleId(ids, card.id)) : setRecoverHandIds((ids) => toggleId(ids, card.id))} disabled={!myTurn || busy} style={[styles.ownCard, selected && styles.selectedCard]}>
+                <PlayingCardFace rank={card.rank} suit={card.suit} />
+              </Pressable>
+            );
+          }
+          return (
+            <DraggableHandCard
+              key={card.id}
+              rank={card.rank}
+              suit={card.suit}
+              disabled={!myTurn || busy}
+              onTap={() => setSelectedCardId(card.id)}
+              onDrop={(x, y) => {
+                if (!myTurn || busy) return;
+                tableRef.current?.measureInWindow((left, top, width, height) => {
+                  if (x >= left && x <= left + width && y >= top && y <= top + height) {
+                    setSelectedCardId(null);
+                    onDraft(card.id);
+                  }
+                });
+              }}
+            />
+          );
+        })}
       </View>
 
       {session.phase === "playing" ? (
         <View style={styles.actions}>
-          <Text style={styles.actionHint}>{!myTurn ? "Waiting for the current player." : buildMode ? "Select at least one card from your hand and any loose floor cards." : recoverBuildId ? "Select a valid combination containing at least one card from your hand to recover the captured build." : selectedCardId ? "Selected card is ready to draft." : "Select a card to draft, or start creating a build."}</Text>
+          <Text style={styles.actionHint}>{!myTurn ? "Waiting for the current player." : buildMode ? "Select at least one card from your hand and any loose floor cards." : recoverBuildId ? "Select a valid combination containing at least one card from your hand to recover the captured build." : "Swipe a card from your hand onto the table to draft it, or choose BUILD."}</Text>
           {buildMode ? (
             <View style={styles.buildPanel}>
               <Text style={styles.buildTotal}>BUILD VALUE: {buildValue}</Text>
@@ -261,10 +342,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
             </View>
           ) : (
             <View style={styles.actionRow}>
-              <Pressable onPress={() => selectedCardId && onDraft(selectedCardId)} disabled={!myTurn || !selectedCardId || busy} style={[styles.actionButton, (!myTurn || !selectedCardId || busy) && styles.disabled]}>
-                {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.actionText}>DRAFT TO FLOOR</Text>}
-              </Pressable>
-              <Pressable onPress={() => { setBuildMode(true); setSelectedCardId(null); }} disabled={!myTurn || busy} style={[styles.endButton, (!myTurn || busy) && styles.disabled]}><Text style={styles.actionText}>BUILD</Text></Pressable>
+              <Pressable onPress={() => { setBuildMode(true); setSelectedCardId(null); }} disabled={!myTurn || busy} style={[styles.actionButton, (!myTurn || busy) && styles.disabled]}><Text style={styles.actionText}>BUILD</Text></Pressable>
               <Pressable onPress={onEndTurn} disabled={!myTurn || busy} style={[styles.endButton, (!myTurn || busy) && styles.disabled]}><Text style={styles.actionText}>END TURN →</Text></Pressable>
             </View>
           )}
@@ -326,6 +404,7 @@ const styles = StyleSheet.create({
   section: { color: "#8d7955", fontSize: 10, fontWeight: "800", letterSpacing: 1.5, marginBottom: 11, marginTop: 5 },
   hand: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 },
   ownCard: { backgroundColor: "#fffefa", borderWidth: 1, borderColor: "#d9d9cf", borderRadius: 7, width: 66, height: 96, alignItems: "center", justifyContent: "center", padding: 3 },
+  draggableCard: { zIndex: 2, elevation: 5 },
   selectedCard: { borderColor: "#b28b45", borderWidth: 2, transform: [{ translateY: -4 }] },
   buildPanel: { marginTop: 10, padding: 12, backgroundColor: "#f0f4ed", borderWidth: 1, borderColor: "#cbd7c9" },
   buildTotal: { color: "#174c39", fontSize: 18, fontWeight: "800", marginBottom: 5 },
