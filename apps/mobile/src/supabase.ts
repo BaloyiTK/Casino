@@ -1,4 +1,5 @@
 import "react-native-url-polyfill/auto";
+import { Platform } from "react-native";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import * as SecureStore from "expo-secure-store";
 
@@ -9,14 +10,32 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 const secureStorage = {
   getItem: (key: string) => SecureStore.getItemAsync(key),
-  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+  setItem: (key: string, value: string) =>
+    SecureStore.setItemAsync(key, value),
   removeItem: (key: string) => SecureStore.deleteItemAsync(key)
 };
+
+const browserStorage = {
+  getItem: async (key: string) =>
+    typeof window !== "undefined" ? window.localStorage.getItem(key) : null,
+  setItem: async (key: string, value: string) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(key, value);
+    }
+  },
+  removeItem: async (key: string) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(key);
+    }
+  }
+};
+
+const authStorage = Platform.OS === "web" ? browserStorage : secureStorage;
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(supabaseUrl!, supabaseAnonKey!, {
       auth: {
-        storage: secureStorage,
+        storage: authStorage,
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false
@@ -32,12 +51,15 @@ export async function requireSupabaseSession() {
     throw new Error("Online play is not configured yet. Add the Supabase URL and anon key.");
   }
 
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const { data: { session }, error: sessionError } =
+    await supabase.auth.getSession();
+
   if (sessionError) throw sessionError;
   if (session) return session;
 
   const { data, error } = await supabase.auth.signInAnonymously();
   if (error) throw error;
   if (!data.session) throw new Error("Could not create a player session.");
+
   return data.session;
 }
