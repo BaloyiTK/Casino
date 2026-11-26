@@ -56,7 +56,7 @@ function SuitIcon({ suit, size, color }: { suit: string; size: number; color: st
         <View style={{ ...common, width: unit * 0.78, height: unit * 0.78, left: size * 0.18, top: size * 0.16, borderRadius: unit, transform: [{ rotate: "45deg" }] }} />
         <View style={{ ...common, width: unit * 0.68, height: unit * 0.68, left: size * 0.12, top: size * 0.13, borderRadius: unit }} />
         <View style={{ ...common, width: unit * 0.68, height: unit * 0.68, right: size * 0.12, top: size * 0.13, borderRadius: unit }} />
-        {inverted ? <View style={{ ...common, width: size * 0.13, height: size * 0.22, bottom: 0, left: size * 0.435 }} /> : null}
+        {inverted ? <View style={{ ...common, width: size * 0.13, height: size * 0.22, top: 0, left: size * 0.435 }} /> : null}
       </View>
     );
   }
