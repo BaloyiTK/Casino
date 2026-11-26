@@ -12,7 +12,7 @@ import {
   shiya,
   transferBuildByConsent,
   validateCardLedger as validateClientLedger
-} from "../../../apps/mobile/src/rules-engine.ts";
+} from "../../../../apps/mobile/src/rules-engine.ts";
 import { validateCardLedger } from "./game-invariants.ts";
 
 const suits = ["♠", "♥", "♦", "♣"] as const;
