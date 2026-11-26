@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { logDevError } from "./src/devLogger";
 import OnlineLobby from "./src/OnlineLobby";
 import {
   Pressable,
@@ -54,6 +55,25 @@ export default function App() {
   const [mode, setMode] = useState<GameMode>("two");
   const [game, setGame] = useState<GameState | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    type GlobalErrorUtils = {
+      getGlobalHandler?: () => (error: Error, isFatal?: boolean) => void;
+      setGlobalHandler?: (handler: (error: Error, isFatal?: boolean) => void) => void;
+    };
+    const errorUtils = (globalThis as typeof globalThis & { ErrorUtils?: GlobalErrorUtils }).ErrorUtils;
+    const previousHandler = errorUtils?.getGlobalHandler?.();
+    if (!errorUtils?.setGlobalHandler) return;
+
+    errorUtils.setGlobalHandler((error, isFatal) => {
+      logDevError("app.unhandled-exception", error, { isFatal: Boolean(isFatal) });
+      previousHandler?.(error, isFatal);
+    });
+
+    return () => {
+      if (previousHandler) errorUtils.setGlobalHandler?.(previousHandler);
+    };
+  }, []);
   const activePlayer = game?.players[game.currentPlayer];
   const cardsInHands = useMemo(
     () => game?.players.reduce((total, player) => total + player.hand.length, 0) ?? 0,
