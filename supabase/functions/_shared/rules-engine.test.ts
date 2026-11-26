@@ -27,10 +27,10 @@ const card = (rank: number, suit: Card["suit"] = "♠"): Card => ({
   id: `${suit}-${rank}`, suit, rank
 });
 const players = [
-  { id: 1, teamId: 1, hand: [card(4), card(3, "♥"), card(8, "♦")] },
-  { id: 2, teamId: 2, hand: [card(7, "♥"), card(2, "♦")] },
-  { id: 3, teamId: 1, hand: [card(5, "♣"), card(1, "♦")] },
-  { id: 4, teamId: 2, hand: [card(6, "♣")] }
+  { id: 1, teamId: 0, hand: [card(4), card(3, "♥"), card(8, "♦")] },
+  { id: 2, teamId: 1, hand: [card(7, "♥"), card(2, "♦")] },
+  { id: 3, teamId: 0, hand: [card(5, "♣"), card(1, "♦")] },
+  { id: 4, teamId: 1, hand: [card(6, "♣")] }
 ];
 
 Deno.test("draft moves one card from the player's hand to the loose floor", () => {
@@ -102,7 +102,7 @@ Deno.test("only the visible top card of an opponent pile can be used", () => {
       { playerId: 2, cards: [card(2, "♦"), card(4, "♥")] }
     ]
   );
-  state.builds.push({ id: "existing", value: 9, ownerId: 3, teamId: 1, cards: [card(9, "♣")] });
+  state.builds.push({ id: "existing", value: 9, ownerId: 3, teamId: 0, cards: [card(9, "♣")] });
   const result = createBuild(state, 1, [card(4).id], [], [card(2, "♦").id]);
   assertEquals(result.ok, false);
 });
@@ -139,7 +139,7 @@ Deno.test("direct capture requires equal values and collects both cards", () => 
 Deno.test("Shiya transfers partner ownership immediately and creates an obligation only when player owns a second build", () => {
   const state = createRulesState(players);
   const partnerBuild = {
-    id: "partner-build", value: 6, ownerId: 3, teamId: 1,
+    id: "partner-build", value: 6, ownerId: 3, teamId: 0,
     cards: [card(6, "♣")]
   };
   const first = shiya({ ...state, builds: [partnerBuild] }, 1, partnerBuild.id);
@@ -150,7 +150,7 @@ Deno.test("Shiya transfers partner ownership immediately and creates an obligati
   const withOwnBuild = {
     ...state,
     builds: [
-      { id: "own-build", value: 4, ownerId: 1, teamId: 1, cards: [card(4)] },
+      { id: "own-build", value: 4, ownerId: 1, teamId: 0, cards: [card(4)] },
       partnerBuild
     ]
   };
@@ -168,12 +168,12 @@ Deno.test("Shiya failure awards the opposing team the win", () => {
   const result = forfeitAfterShiya(pending, 1);
   assert(result.ok);
   assertEquals(result.state.gameOver, true);
-  assertEquals(result.state.winnerTeamId, 2);
+  assertEquals(result.state.winnerTeamId, 1);
 });
 
 Deno.test("normal partner ownership transfer requires explicit owner approval", () => {
   const state = createRulesState(players);
-  const build = { id: "b1", value: 4, ownerId: 1, teamId: 1, cards: [card(4)] };
+  const build = { id: "b1", value: 4, ownerId: 1, teamId: 0, cards: [card(4)] };
   const denied = transferBuildByConsent({ ...state, builds: [build] }, 3, "b1", false);
   assertEquals(denied.ok, false);
   const approved = transferBuildByConsent({ ...state, builds: [build] }, 3, "b1", true);
