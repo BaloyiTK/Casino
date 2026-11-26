@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { OnlineGameSession, RoomSummary } from "./rooms";
 
 type Props = {
