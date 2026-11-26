@@ -165,8 +165,12 @@ export default function OnlineLobby() {
         ) : (
           <View style={styles.panel}>
             <Text style={styles.label}>{(room.visibility ?? "private").toUpperCase()} ROOM · {room.game_mode === "two" ? "TWO HANDS" : "FOUR HANDS"}</Text>
-            <Text style={styles.code}>{room.room_code}</Text>
-            <Pressable onPress={share} style={styles.primary}><Text style={styles.primaryText}>SHARE INVITE</Text></Pressable>
+            {room.visibility === "private" ? (
+              <>
+                <Text style={styles.code}>{room.room_code}</Text>
+                <Pressable onPress={share} style={styles.primary}><Text style={styles.primaryText}>SHARE INVITE</Text></Pressable>
+              </>
+            ) : null}
             <Text style={styles.label}>PLAYERS · {room.occupied_slots}/{room.max_players}</Text>
             {(room.players ?? []).map(p => (
               <View key={p.seat} style={styles.playerRow}>
