@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   cardCornerBottom: { alignSelf: "flex-end", transform: [{ rotate: "180deg" }] },
   cardCornerRank: { color: "#1b2a22", fontSize: 11, lineHeight: 12, fontWeight: "900" },
   cardCornerSuit: { color: "#1b2a22", fontSize: 9, lineHeight: 10, fontWeight: "800" },
-  cardPips: { ...StyleSheet.absoluteFillObject },
+  cardPips: { ...StyleSheet.absoluteFill },
   cardPip: { position: "absolute", width: 18, height: 20, marginLeft: -9, marginTop: -10, textAlign: "center", textAlignVertical: "center", fontSize: 16, lineHeight: 19, fontWeight: "700" },
   cardPipCompact: { width: 14, height: 15, marginLeft: -7, marginTop: -7.5, fontSize: 10, lineHeight: 12 },
   cardAcePip: { fontSize: 30, fontWeight: "700" },
