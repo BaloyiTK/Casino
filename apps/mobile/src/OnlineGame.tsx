@@ -166,7 +166,7 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
   const seatCard = (seat: number, position: "top" | "side" | "bottom") => (
     <View key={seat} style={[styles.seatCard, position === "side" && styles.seatCardSide, position === "bottom" && styles.seatCardBottom]}>
       <View style={styles.seatIdentity}>
-        <View style={styles.avatarCircle}><Text style={styles.avatarInitial}>{nameForSeat(seat).trim().split(/\\s+/).map((part) => part[0]).slice(0,2).join("").toUpperCase()}</Text></View>
+        <View style={styles.avatarCircle}><Text style={styles.avatarInitial}>{nameForSeat(seat).trim().split(/\s+/).map((part) => part[0]).slice(0,2).join("").toUpperCase()}</Text></View>
         <View style={styles.seatInfo}>
           <Text style={styles.seatName}>P{seat} · {seat === session.ownSeat ? "YOU" : nameForSeat(seat).toUpperCase()}</Text>
           <Text style={styles.seatSub}>{nameForSeat(seat)} · TEAM {session.gameMode === "two" ? seat : seat % 2 === 1 ? 1 : 2}</Text>
