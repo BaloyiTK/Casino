@@ -161,6 +161,22 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
   const nameForSeat = (seat: number) =>
     players.find((player) => player.seat === seat)?.display_name ?? `Player ${seat}`;
 
+  const seatHandCount = (seat: number) => seat === session.ownSeat ? session.ownHandCount : session.opponents.find((player) => player.seat === seat)?.handCount ?? 0;
+  const seatCapturedCount = (seat: number) => session.capturedPiles.find((pile) => pile.seat === seat)?.count ?? 0;
+  const seatCard = (seat: number, position: "top" | "side" | "bottom") => (
+    <View key={seat} style={[styles.seatCard, position === "side" && styles.seatCardSide, position === "bottom" && styles.seatCardBottom]}>
+      <View style={styles.seatIdentity}>
+        <View style={styles.avatarCircle}><Text style={styles.avatarInitial}>{nameForSeat(seat).trim().split(/\\s+/).map((part) => part[0]).slice(0,2).join("").toUpperCase()}</Text></View>
+        <View style={styles.seatInfo}>
+          <Text style={styles.seatName}>P{seat} · {seat === session.ownSeat ? "YOU" : nameForSeat(seat).toUpperCase()}</Text>
+          <Text style={styles.seatSub}>{nameForSeat(seat)} · TEAM {session.gameMode === "two" ? seat : seat % 2 === 1 ? 1 : 2}</Text>
+          <Text style={styles.seatStats}>{seatHandCount(seat)} CARDS IN HAND · CAPTURED × {seatCapturedCount(seat)}</Text>
+        </View>
+      </View>
+      <View style={styles.seatBacks}>{Array.from({ length: Math.min(seatHandCount(seat), 5) }, (_, index) => <View key={index} style={styles.seatBackCard}><Text style={styles.seatBackMark}>✦</Text></View>)}</View>
+    </View>
+  );
+
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.kicker}>{session.gameMode === "two" ? "TWO HANDS" : "FOUR HANDS"} · ROUND {session.round}</Text>
@@ -172,6 +188,13 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
         {session.message ? <Text style={styles.resultMessage}>{session.message}</Text> : null}
       </View>
 
+      <View style={styles.casinoHeader}>
+        <View><Text style={styles.casinoBrand}>♠ CASINO</Text><Text style={styles.casinoRoom}>{session.gameMode === "two" ? "TWO HANDS" : "FOUR HANDS"} · ROOM {room.room_code}</Text></View>
+        <Text style={styles.casinoTeams}>{session.gameMode === "four" ? "TEAM 1: P1 + P3  |  TEAM 2: P2 + P4" : "TWO PLAYER MATCH"}</Text>
+      </View>
+      {session.gameMode === "four" ? seatCard(3, "top") : seatCard(session.ownSeat === 1 ? 2 : 1, "top")}
+      <View style={styles.tableLayout}>
+      {session.gameMode === "four" ? seatCard(2, "side") : null}
       <View ref={tableRef} collapsable={false} style={styles.table}>
         <View style={styles.tableHeader}>
           <Text style={styles.tableLabel}>THE FLOOR</Text>
@@ -188,6 +211,9 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
           </View>
         ) : <Text style={styles.emptyFloor}>The floor is clear.</Text>}
       </View>
+      {session.gameMode === "four" ? seatCard(4, "side") : null}
+      </View>
+      {seatCard(session.ownSeat, "bottom")}
 
       <View style={styles.buildsPanel}>
         <View style={styles.tableHeader}>
@@ -375,7 +401,25 @@ export default function OnlineGame({ session, room, busy, onDraft, onEndTurn, on
 }
 
 const styles = StyleSheet.create({
-  page: { padding: 22, paddingBottom: 50, backgroundColor: "#f3f2eb" },
+  page: { padding: 12, paddingBottom: 36, backgroundColor: "#001b0b" },
+  casinoHeader: { backgroundColor: "#001707", borderBottomWidth: 2, borderBottomColor: "#d9ae37", paddingHorizontal: 8, paddingVertical: 9, marginBottom: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  casinoBrand: { color: "#ffd65b", fontSize: 25, fontWeight: "900", letterSpacing: 2 },
+  casinoRoom: { color: "#fff8e7", fontSize: 9, fontWeight: "800", letterSpacing: 1 },
+  casinoTeams: { color: "#fff3d2", fontSize: 9, fontWeight: "800", textAlign: "right", flexShrink: 1 },
+  seatCard: { backgroundColor: "#00300f", borderWidth: 2, borderColor: "#d9b43d", borderRadius: 12, padding: 9, marginBottom: 9, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, shadowColor: "#f6cf47", shadowOpacity: 0.3, shadowRadius: 5, elevation: 3 },
+  seatCardSide: { width: 76, minHeight: 180, flexDirection: "column", justifyContent: "flex-start", padding: 5, marginBottom: 0 },
+  seatCardBottom: { borderColor: "#d8ff36", borderWidth: 2, marginTop: 8 },
+  seatIdentity: { flexDirection: "row", alignItems: "center", gap: 7, flexShrink: 1 },
+  avatarCircle: { width: 39, height: 39, borderRadius: 20, backgroundColor: "#d5b46a", borderWidth: 2, borderColor: "#ffe47c", alignItems: "center", justifyContent: "center" },
+  avatarInitial: { color: "#102116", fontSize: 13, fontWeight: "900" },
+  seatInfo: { flexShrink: 1 },
+  seatName: { color: "#fff4cf", fontSize: 11, fontWeight: "900" },
+  seatSub: { color: "#e8d49b", fontSize: 9, marginTop: 2 },
+  seatStats: { color: "#d3e2d3", fontSize: 8, marginTop: 4 },
+  seatBacks: { flexDirection: "row", gap: 3, flexShrink: 0 },
+  seatBackCard: { width: 16, height: 25, borderRadius: 3, borderWidth: 1, borderColor: "#fff", backgroundColor: "#1d3967", alignItems: "center", justifyContent: "center" },
+  seatBackMark: { color: "#fff", fontSize: 8 },
+
   kicker: { color: "#9a8050", fontSize: 10, fontWeight: "800", letterSpacing: 2, marginTop: 24 },
   title: { color: "#1b2a22", fontSize: 34, lineHeight: 40, fontWeight: "300", marginTop: 12, marginBottom: 22 },
   turnPanel: { backgroundColor: "#174c39", padding: 18, marginBottom: 14 },
@@ -385,14 +429,14 @@ const styles = StyleSheet.create({
   turnLabel: { color: "#d6c59e", fontSize: 9, fontWeight: "800", letterSpacing: 1.5 },
   turnName: { color: "#fff", fontSize: 24, fontWeight: "700", marginTop: 5 },
   muted: { color: "#9da99f", fontSize: 10, lineHeight: 15, marginTop: 5 },
-  table: { backgroundColor: "#245b43", padding: 16, minHeight: 130, marginBottom: 22 },
-  tableHeader: { flexDirection: "row", justifyContent: "space-between" },
-  tableLabel: { color: "#d6c59e", fontSize: 9, fontWeight: "800", letterSpacing: 1.3 },
+  table: { flex: 1, minWidth: 0, backgroundColor: "#003b17", borderWidth: 4, borderColor: "#e8b52d", borderRadius: 16, padding: 10, minHeight: 260, marginBottom: 8 },
+  tableHeader: { flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: "#d6b63e", paddingBottom: 7 },
+  tableLabel: { color: "#ffd65b", fontSize: 10, fontWeight: "900", letterSpacing: 1.1 },
   emptyFloor: { color: "#c5d2c8", textAlign: "center", marginTop: 35, fontSize: 12 },
   cardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 16 },
   floorCard: { backgroundColor: "#fffefa", borderRadius: 6, width: 56, height: 82, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#d8d8cf", padding: 3 },
-  buildsPanel: { backgroundColor: "#fbfaf6", borderWidth: 1, borderColor: "#dedfd5", padding: 14, marginBottom: 20 },
-  buildsHeading: { color: "#8d7955", fontSize: 9, fontWeight: "800", letterSpacing: 1.2 },
+  buildsPanel: { backgroundColor: "#052b13", borderWidth: 1, borderColor: "#9b873e", padding: 12, marginBottom: 12, borderRadius: 8 },
+  buildsHeading: { color: "#e5c45b", fontSize: 9, fontWeight: "800", letterSpacing: 1.2 },
   buildRow: { borderTopWidth: 1, borderColor: "#e5e4db", paddingVertical: 11, marginTop: 10 },
   buildValue: { color: "#174c39", fontSize: 15, fontWeight: "800" },
   buildOwner: { color: "#7c877e", fontSize: 10, marginTop: 3 },
@@ -401,14 +445,14 @@ const styles = StyleSheet.create({
   buildCards: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginTop: 8 },
   buildCard: { backgroundColor: "#fffefa", width: 43, height: 62, borderWidth: 1, borderColor: "#d8d8cf", borderRadius: 4, padding: 2 },
   pileCardPreview: { alignItems: "center", gap: 4 },
-  section: { color: "#8d7955", fontSize: 10, fontWeight: "800", letterSpacing: 1.5, marginBottom: 11, marginTop: 5 },
-  hand: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 },
-  ownCard: { backgroundColor: "#fffefa", borderWidth: 1, borderColor: "#d9d9cf", borderRadius: 7, width: 66, height: 96, alignItems: "center", justifyContent: "center", padding: 3 },
+  section: { color: "#f0d36e", fontSize: 10, fontWeight: "800", letterSpacing: 1.5, marginBottom: 11, marginTop: 5 },
+  hand: { flexDirection: "row", flexWrap: "nowrap", gap: 5, marginBottom: 18, justifyContent: "center" },
+  ownCard: { backgroundColor: "#fffefa", borderWidth: 1, borderColor: "#d9d9cf", borderRadius: 7, width: 48, height: 70, alignItems: "center", justifyContent: "center", padding: 3 },
   draggableCard: { zIndex: 2, elevation: 5 },
   selectedCard: { borderColor: "#b28b45", borderWidth: 2, transform: [{ translateY: -4 }] },
   buildPanel: { marginTop: 10, padding: 12, backgroundColor: "#f0f4ed", borderWidth: 1, borderColor: "#cbd7c9" },
   buildTotal: { color: "#174c39", fontSize: 18, fontWeight: "800", marginBottom: 5 },
-  actions: { backgroundColor: "#fbfaf6", borderWidth: 1, borderColor: "#dedfd5", padding: 14, marginBottom: 20 },
+  actions: { backgroundColor: "#052b13", borderWidth: 1, borderColor: "#b99b3d", padding: 12, marginBottom: 14, borderRadius: 8 },
   actionHint: { color: "#7c877e", fontSize: 10, marginBottom: 11 },
   actionRow: { flexDirection: "row", gap: 8 },
   actionButton: { flex: 1, backgroundColor: "#174c39", padding: 13, alignItems: "center", justifyContent: "center", minHeight: 45 },
@@ -427,12 +471,12 @@ const styles = StyleSheet.create({
   cardAcePip: { fontSize: 30, fontWeight: "700" },
   red: { color: "#b43b3b" },
   cardIndex: { color: "#a0a69e", fontSize: 8, marginTop: 7 },
-  opponent: { backgroundColor: "#fbfaf6", borderWidth: 1, borderColor: "#dedfd5", padding: 13, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  opponentName: { color: "#1b2a22", fontSize: 12, fontWeight: "800" },
+  opponent: { backgroundColor: "#052b13", borderWidth: 1, borderColor: "#9b873e", padding: 10, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  opponentName: { color: "#fff2c6", fontSize: 12, fontWeight: "800" },
   backCards: { flexDirection: "row" },
   backCard: { width: 22, height: 32, borderRadius: 3, backgroundColor: "#174c39", borderWidth: 1, borderColor: "#d6c59e", alignItems: "center", justifyContent: "center", marginLeft: -5 },
   backMark: { color: "#d6c59e", fontSize: 9 },
-  notice: { backgroundColor: "#e9ede5", borderLeftWidth: 3, borderLeftColor: "#245b43", padding: 14, marginTop: 13 },
-  noticeTitle: { color: "#245b43", fontSize: 9, fontWeight: "800", letterSpacing: 1.2 },
-  footer: { color: "#929b91", textAlign: "center", fontSize: 8, letterSpacing: 1, marginTop: 20 }
+  notice: { backgroundColor: "#052b13", borderLeftWidth: 3, borderLeftColor: "#d6b63e", padding: 14, marginTop: 13 },
+  noticeTitle: { color: "#e5c45b", fontSize: 9, fontWeight: "800", letterSpacing: 1.2 },
+  footer: { color: "#b9c8b8", textAlign: "center", fontSize: 8, letterSpacing: 1, marginTop: 20 }
 });
